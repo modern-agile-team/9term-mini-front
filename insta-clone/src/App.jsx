@@ -1,11 +1,11 @@
-import './App.css';
+import AppRouter from './routes/index';
 
-export default function App() {
+function App() {
   return (
-    <>
-      <div className="text-3xl font-bold text-blue-500">
-        Tailwind CSS is working!
-      </div>
-    </>
+    <div className="app">
+      <AppRouter />
+    </div>
   );
 }
+
+export default App;

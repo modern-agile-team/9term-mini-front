@@ -4,17 +4,15 @@ import Login from '../pages/Auth/Login';
 import Signup from '../pages/Auth/Signup';
 import Profile from '../pages/Profile/Profile';
 
-const AppRoutes = () => {
+export default function AppRouter() {
   return (
     <Router>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/profile/:username" element={<Profile />} />
+        <Route path="/profile" element={<Profile />} />
       </Routes>
     </Router>
   );
-};
-
-export default AppRoutes;
+}
