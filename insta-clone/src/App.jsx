@@ -1,10 +1,14 @@
+import { AuthProvider } from './store/AuthContext.jsx';
+import { PostProvider } from './store/PostContext.jsx';
 import AppRouter from './routes/index';
 
 function App() {
   return (
-    <div className="app">
-      <AppRouter />
-    </div>
+    <AuthProvider>
+      <PostProvider>
+        <AppRouter />
+      </PostProvider>
+    </AuthProvider>
   );
 }
 
