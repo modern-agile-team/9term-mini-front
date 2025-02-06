@@ -18,6 +18,7 @@
 
 ## 피그마
 [Instagram Clone Figma Link](https://www.figma.com/design/7N49T3Ic8SwYtpxyk5wmqh/%EC%9D%B8%EC%8A%A4%ED%83%80-%ED%81%B4%EB%A1%A0%EC%BD%94%EB%94%A9?node-id=0-1&m=dev)
+<img width="736" alt="image" src="https://github.com/user-attachments/assets/aff767ca-00d3-47f6-9cfc-76b357d0cc4c" />
 
 ## 페이지 구성
 * **메인 페이지**: 사용자 피드에서 친구들의 게시물을 확인할 수 있습니다.
