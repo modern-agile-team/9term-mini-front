@@ -12,7 +12,7 @@
 <img src="https://img.shields.io/badge/Visual%20Studio%20Code-0078d7.svg?style=for-the-badge&logo=visual-studio-code&logoColor=white"/> <img src="https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white"/>
 
 ## Team
-|<img src="https://avatars.githubusercontent.com/u/127826452?v=4" width="150" height="150"/>|<img src="https://avatars.githubusercontent.com/u/172516678?v=4" width="150" height="150"/>|<img src="https://avatars.githubusercontent.com/u/10623507?v=4" width="150" height="150"/>|
+|<img src="https://avatars.githubusercontent.com/u/127826452?v=4" width="150" height="150"/>|<img src="https://avatars.githubusercontent.com/u/190096282?v=4" width="150" height="150"/>|<img src="https://avatars.githubusercontent.com/u/190092045?v=4" width="150" height="150"/>|
 |:-:|:-:|:-:|
 |팀장<br/>Frontend<br/>[@yihimin](https://github.com/yihimin)|팀원<br/>Frontend<br/>[@eric5025](https://github.com/eric5025)|팀원<br/>Frontend<br/>[@suin0510](https://github.com/suin0510)|
 
