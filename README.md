@@ -12,9 +12,9 @@
 <img src="https://img.shields.io/badge/Visual%20Studio%20Code-0078d7.svg?style=for-the-badge&logo=visual-studio-code&logoColor=white"/> <img src="https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white"/>
 
 ## Team
-|<img src="https://avatars.githubusercontent.com/u/127826452?v=4" width="150" height="150"/>|<img src="https://avatars.githubusercontent.com/u/190096282?v=4" width="150" height="150"/>|<img src="https://avatars.githubusercontent.com/u/190092045?v=4" width="150" height="150"/>|
-|:-:|:-:|:-:|
-|팀장<br/>Frontend<br/>[@yihimin](https://github.com/yihimin)|팀원<br/>Frontend<br/>[@eric5025](https://github.com/eric5025)|팀원<br/>Frontend<br/>[@suin0510](https://github.com/suin0510)|
+|<img src="https://avatars.githubusercontent.com/u/127826452?v=4" width="150" height="150"/>|<img src="https://avatars.githubusercontent.com/u/190096282?v=4" width="150" height="150"/>|
+|:-:|:-:|
+|팀장<br/>Frontend<br/>[@yihimin](https://github.com/yihimin)|팀원<br/>Frontend<br/>[@eric5025](https://github.com/eric5025)|
 
 ## 피그마
 [Instagram Clone Figma Link](https://www.figma.com/design/7N49T3Ic8SwYtpxyk5wmqh/%EC%9D%B8%EC%8A%A4%ED%83%80-%ED%81%B4%EB%A1%A0%EC%BD%94%EB%94%A9?node-id=0-1&m=dev)
