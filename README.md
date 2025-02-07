@@ -11,6 +11,10 @@
 ### 개발 도구
 <img src="https://img.shields.io/badge/Visual%20Studio%20Code-0078d7.svg?style=for-the-badge&logo=visual-studio-code&logoColor=white"/> <img src="https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white"/>
 
+### 협업 툴
+<img src="https://img.shields.io/badge/Figma-F24E1E?style=for-the-badge&logo=figma&logoColor=white"/> <img src="https://img.shields.io/badge/Notion-000000?style=for-the-badge&logo=notion&logoColor=white"/>
+
+
 ## Team
 |<img src="https://avatars.githubusercontent.com/u/127826452?v=4" width="150" height="150"/>|<img src="https://avatars.githubusercontent.com/u/190096282?v=4" width="150" height="150"/>|
 |:-:|:-:|
