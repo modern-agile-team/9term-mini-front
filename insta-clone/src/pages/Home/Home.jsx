@@ -1,14 +1,12 @@
 import React from 'react';
+import FeedList from './Feed';
 import Sidebar from './Sidebar';
-import Feed from './Feed';
 
 const Home = () => {
   return (
-    <div className="home-container">
-      <h1>Home Page</h1>
-      <p>로그인 후 보이는 홈 화면입니다.</p>
+    <div className="flex w-full h-screen">
       <Sidebar />
-      <Feed />
+      <FeedList />
     </div>
   );
 };
