@@ -1,4 +1,3 @@
-// src/pages/Home/FeedCard.jsx
 import React, { useState, useEffect } from 'react';
 import CommentInput from './CommentInput';
 
@@ -33,9 +32,14 @@ const FeedCard = ({ username, image, caption, likes = 0, comments = [] }) => {
     if (newComment.trim() !== '' && currentUser) {
       setCommentList([
         ...commentList,
-        { username: currentUser, text: newComment },
+        { id: Date.now(), username: currentUser, text: newComment }, // id 추가
       ]);
     }
+  };
+
+  // 🔹 댓글 삭제 기능 추가
+  const handleDeleteComment = commentId => {
+    setCommentList(commentList.filter(comment => comment.id !== commentId));
   };
 
   return (
@@ -78,11 +82,24 @@ const FeedCard = ({ username, image, caption, likes = 0, comments = [] }) => {
         </p>
         {showComments && (
           <div className="mt-2">
-            {commentList.map((comment, index) => (
-              <p key={index} className="text-sm">
-                <span className="font-bold">{comment.username}</span>{' '}
-                {comment.text}
-              </p>
+            {commentList.map(comment => (
+              <div
+                key={comment.id}
+                className="flex justify-between items-center"
+              >
+                <p className="text-sm">
+                  <span className="font-bold">{comment.username}</span>{' '}
+                  {comment.text}
+                </p>
+                {currentUser === comment.username && (
+                  <button
+                    className="text-red-500 text-xs ml-2"
+                    onClick={() => handleDeleteComment(comment.id)}
+                  >
+                    삭제
+                  </button>
+                )}
+              </div>
             ))}
           </div>
         )}

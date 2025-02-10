@@ -1,5 +1,5 @@
 import React from 'react';
-import FeedList from './Feed';
+import Feed from './Feed';
 import Navbar from './Navbar';
 import Footer from './Footer';
 
@@ -8,7 +8,7 @@ const Home = () => {
     <div className="max-w-[768px] w-full h-screen mx-auto overflow-hidden border border-gray-300 flex flex-col">
       <Navbar />
       <div className="flex-1 overflow-auto">
-        <FeedList />
+        <Feed />
       </div>
       <Footer />
     </div>
