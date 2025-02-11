@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import CommentInput from './CommentInput';
 
 const FeedCard = ({ username, image, caption, likes = 0, comments = [] }) => {

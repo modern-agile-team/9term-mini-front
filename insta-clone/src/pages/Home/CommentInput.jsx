@@ -1,5 +1,5 @@
 // src/components/CommentInput.jsx
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 const CommentInput = ({ onAddComment }) => {
   const [newComment, setNewComment] = useState('');

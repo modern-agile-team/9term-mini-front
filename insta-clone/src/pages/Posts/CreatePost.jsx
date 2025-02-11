@@ -1,5 +1,4 @@
 // src/pages/Posts/CreatePost.jsx
-import React from 'react';
 
 const CreatePost = ({ onClose }) => {
   return (

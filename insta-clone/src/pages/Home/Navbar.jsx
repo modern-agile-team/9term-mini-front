@@ -1,5 +1,5 @@
 // src/pages/Home/Navbar.jsx
-import React, { useState } from 'react';
+import { useState } from 'react';
 import CreatePost from '../Posts/CreatePost';
 
 const Navbar = () => {
