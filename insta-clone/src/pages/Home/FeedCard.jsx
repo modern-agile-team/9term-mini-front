@@ -1,46 +1,17 @@
 import { useState, useEffect } from 'react';
 import CommentInput from '@/pages/Home/CommentInput';
+import useCurrentUser from '@/hooks/useCurrentUser';
+import useLike from '@/hooks/useLike';
+import useComments from '@/hooks/useComments';
 
 const FeedCard = ({ username, image, caption, likes = 0, comments = [] }) => {
   const [showComments, setShowComments] = useState(false);
-  const [likeCount, setLikeCount] = useState(likes);
-  const [isLiked, setIsLiked] = useState(false);
-  const [commentList, setCommentList] = useState(comments);
-  const [currentUser, setCurrentUser] = useState(null);
-
-  // 현재 로그인된 사용자 정보 불러오기 (MSW에서 응답)
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const response = await fetch('/api/user');
-        const data = await response.json();
-        setCurrentUser(data.username);
-      } catch (error) {
-        console.error('사용자 정보를 불러오는 중 오류 발생:', error);
-      }
-    };
-
-    fetchUser();
-  }, []);
-
-  const handleLike = () => {
-    setIsLiked(!isLiked);
-    setLikeCount(isLiked ? likeCount - 1 : likeCount + 1);
-  };
-
-  const handleAddComment = newComment => {
-    if (newComment.trim() !== '' && currentUser) {
-      setCommentList([
-        ...commentList,
-        { id: Date.now(), username: currentUser, text: newComment }, // id 추가
-      ]);
-    }
-  };
-
-  // 🔹 댓글 삭제 기능 추가
-  const handleDeleteComment = commentId => {
-    setCommentList(commentList.filter(comment => comment.id !== commentId));
-  };
+  const currentUser = useCurrentUser();
+  const { likeCount, isLiked, toggleLike } = useLike(likes);
+  const { commentList, addComment, deleteComment } = useComments(
+    comments,
+    currentUser
+  );
 
   return (
     <div className="p-4 mb-4 bg-white w-full max-w-lg mx-auto">
@@ -61,7 +32,7 @@ const FeedCard = ({ username, image, caption, likes = 0, comments = [] }) => {
             }
             alt="Like"
             className="w-6 h-6 cursor-pointer"
-            onClick={handleLike}
+            onClick={toggleLike}
           />
           <img
             src="/assets/icons/comments.svg"
@@ -94,7 +65,7 @@ const FeedCard = ({ username, image, caption, likes = 0, comments = [] }) => {
                 {currentUser === comment.username && (
                   <button
                     className="text-red-500 text-xs ml-2"
-                    onClick={() => handleDeleteComment(comment.id)}
+                    onClick={() => deleteComment(comment.id)}
                   >
                     삭제
                   </button>
@@ -103,7 +74,7 @@ const FeedCard = ({ username, image, caption, likes = 0, comments = [] }) => {
             ))}
           </div>
         )}
-        <CommentInput onAddComment={handleAddComment} />
+        <CommentInput onAddComment={addComment} />
       </div>
     </div>
   );

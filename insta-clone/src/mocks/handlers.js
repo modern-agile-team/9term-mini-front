@@ -1,4 +1,3 @@
-// src/mocks/handlers.js
 import { http, HttpResponse } from 'msw';
 
 let posts = [
@@ -28,20 +27,54 @@ let posts = [
   },
 ];
 
+let users = [{ username: 'mockUser123', password: 'password123' }];
+let loggedInUser = null;
+
 export const handlers = [
-  // ✅ 현재 로그인된 사용자 정보 API
+  // ✅ 현재 로그인된 사용자 정보 API (기존 코드에서 빠져있던 부분 추가)
   http.get('/api/user', async () => {
-    return HttpResponse.json({ username: 'mockUser123' });
+    if (!loggedInUser) {
+      return HttpResponse.json(
+        { error: '로그인이 필요합니다' },
+        { status: 401 }
+      );
+    }
+    return HttpResponse.json({ username: loggedInUser.username });
+  }),
+
+  // ✅ 회원가입
+  http.post('/api/signup', async ({ request }) => {
+    const newUser = await request.json();
+    users.push(newUser);
+    return HttpResponse.json({ message: '회원가입 성공' }, { status: 201 });
+  }),
+
+  // ✅ 로그인
+  http.post('/api/login', async ({ request }) => {
+    const { username, password } = await request.json();
+    const user = users.find(
+      u => u.username === username && u.password === password
+    );
+    if (!user) {
+      return HttpResponse.json({ error: '로그인 실패' }, { status: 401 });
+    }
+    loggedInUser = user;
+    return HttpResponse.json({ message: '로그인 성공', user });
+  }),
+
+  // ✅ 로그아웃
+  http.delete('/api/logout', async () => {
+    loggedInUser = null;
+    return HttpResponse.json({ message: '로그아웃 성공' });
   }),
 
   // ✅ 게시물 조회 (페이징 지원)
   http.get('/api/posts', async ({ request }) => {
     const url = new URL(request.url);
     const page = Number(url.searchParams.get('page')) || 1;
-    const perPage = 2; // 한 페이지당 2개 게시물 제공
+    const perPage = 2;
     const startIndex = (page - 1) * perPage;
     const paginatedPosts = posts.slice(startIndex, startIndex + perPage);
-
     return HttpResponse.json(paginatedPosts);
   }),
 
@@ -55,15 +88,32 @@ export const handlers = [
     return HttpResponse.json(newPost, { status: 201 });
   }),
 
+  // ✅ 게시물 수정
+  http.patch('/api/posts/:id', async ({ params, request }) => {
+    const { id } = params;
+    const updatedData = await request.json();
+    const post = posts.find(post => post.id === Number(id));
+    if (!post) {
+      return HttpResponse.json({ error: '게시물 없음' }, { status: 404 });
+    }
+    Object.assign(post, updatedData);
+    return HttpResponse.json(post);
+  }),
+
+  // ✅ 게시물 삭제
+  http.delete('/api/posts/:id', async ({ params }) => {
+    const { id } = params;
+    posts = posts.filter(post => post.id !== Number(id));
+    return HttpResponse.json({ message: '게시물 삭제 성공' });
+  }),
+
   // ✅ 게시물 좋아요 / 취소
   http.post('/api/posts/:id/like', async ({ params }) => {
     const { id } = params;
     const post = posts.find(post => post.id === Number(id));
-
     if (!post) {
       return HttpResponse.json({ error: '게시물 없음' }, { status: 404 });
     }
-
     post.likes += 1;
     return HttpResponse.json(post);
   }),
@@ -72,11 +122,9 @@ export const handlers = [
   http.get('/api/posts/:id/comments', async ({ params }) => {
     const { id } = params;
     const post = posts.find(post => post.id === Number(id));
-
     if (!post) {
       return HttpResponse.json({ error: '게시물 없음' }, { status: 404 });
     }
-
     return HttpResponse.json(post.comments);
   }),
 
@@ -84,13 +132,27 @@ export const handlers = [
   http.post('/api/posts/:id/comments', async ({ params, request }) => {
     const { id } = params;
     const post = posts.find(post => post.id === Number(id));
-
     if (!post) {
       return HttpResponse.json({ error: '게시물 없음' }, { status: 404 });
     }
-
     const newComment = await request.json();
     post.comments.push(newComment);
     return HttpResponse.json(newComment, { status: 201 });
+  }),
+
+  // ✅ 댓글 삭제
+  http.delete('/api/comments/:id', async ({ params }) => {
+    const { id } = params;
+    posts.forEach(post => {
+      post.comments = post.comments.filter(
+        (comment, index) => index !== Number(id)
+      );
+    });
+    return HttpResponse.json({ message: '댓글 삭제 성공' });
+  }),
+
+  // ✅ 댓글 좋아요 / 취소 (단순 예제, 좋아요 수 추가 가능)
+  http.post('/api/comments/:id/like', async ({ params }) => {
+    return HttpResponse.json({ message: '댓글 좋아요 / 취소 성공' });
   }),
 ];
