@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import CommentInput from '@/pages/Home/CommentInput';
 import useCurrentUser from '@/hooks/useCurrentUser';
 import useLike from '@/hooks/useLike';
@@ -12,6 +12,11 @@ const FeedCard = ({ username, image, caption, likes = 0, comments = [] }) => {
     comments,
     currentUser
   );
+
+  // ✅ 로그인된 사용자 정보가 아직 로딩 중이면 로딩 화면 표시
+  if (currentUser === null) {
+    return <p>로딩 중...</p>;
+  }
 
   return (
     <div className="p-4 mb-4 bg-white w-full max-w-lg mx-auto">
