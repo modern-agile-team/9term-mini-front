@@ -1,6 +1,6 @@
 // src/pages/Home/Navbar.jsx
 import { useState } from 'react';
-import CreatePost from '../Posts/CreatePost';
+import CreatePost from '@/pages/Posts/CreatePost';
 
 const Navbar = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);

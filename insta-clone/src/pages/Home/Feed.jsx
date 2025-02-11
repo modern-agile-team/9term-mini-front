@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import FeedCard from './FeedCard';
+import FeedCard from '@/pages/Home/FeedCard';
 
 const FeedList = ({ posts, observerRef }) => {
   return (

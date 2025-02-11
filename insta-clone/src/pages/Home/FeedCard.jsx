@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import CommentInput from './CommentInput';
+import CommentInput from '@/pages/Home/CommentInput';
 
 const FeedCard = ({ username, image, caption, likes = 0, comments = [] }) => {
   const [showComments, setShowComments] = useState(false);

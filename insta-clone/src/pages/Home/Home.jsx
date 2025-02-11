@@ -1,6 +1,6 @@
-import Feed from './Feed';
-import Navbar from './Navbar';
-import Footer from './Footer';
+import Feed from '@/pages/Home/Feed';
+import Navbar from '@/pages/Home/Navbar';
+import Footer from '@/pages/Home/Footer';
 
 const Home = () => {
   return (
