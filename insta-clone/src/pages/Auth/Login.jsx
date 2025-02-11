@@ -1,7 +1,116 @@
-export default function Login() {
+import React, { useState , useEffect} from 'react';
+import logoSvg from '/assets/icons/logo.svg';
+import { Link } from 'react-router-dom';
+import validateAuth from './utils'
+
+const Login = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  useEffect(() => {
+    setError('');
+  }, [email, password]);
+
+  // 폼 제출 처리 함수
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    const validation = validateAuth({ email, password });
+    if (!validation.isValid) {
+      setError(validation.error);
+      return;
+    }
+ 
+
+    // 로그인 시도 로직 (아직 API 연결 전)
+    try {
+      // 여기에 실제 API 호출 로직 추가
+      setError(''); // 에러 초기화
+    } catch (error) {
+      setError('로그인에 실패했습니다. 다시 시도해주세요.');
+    }
+  };
+
   return (
-    <div className="flex items-center justify-center h-screen">
-      <h1 className="text-3xl font-bold">Login Page</h1>
-    </div>
+    // 전체 페이지 컨테이너: 화면 전체 높이, 배경색 설정, 중앙 정렬
+    <div className="max-w-[768px] w-full h-screen mx-auto overflow-hidden border border-gray-300 flex flex-col">
+        {/* 로그인 폼 박스: 흰색 배경, 테두리 설정 */}
+        <div className=" p-6 sm:p-10 mb-4">
+          {/* Instagram 로고 */}
+          <div className="flex justify-center mb-8 ">
+            <img src={logoSvg} alt="Instagram" className="h-[51px] w-auto" />
+          </div>
+          
+          {/* 에러 메시지 */}
+          {error && (
+            <div className="text-red-500 text-sm text-center mb-4">
+              {error}
+            </div>
+          )}
+          
+          {/* 로그인 폼 */}
+          <form className="space-y-2 flex flex-col items-center " onSubmit={handleSubmit}>
+            {/* 이메일 입력 필드 */}
+            <input
+              type="email"
+              name="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="이메일"
+              aria-label="이메일"
+              className=" w-[40%] px-2 py-[9px] bg-[#fafafa] text-sm border border-gray-300 rounded-sm
+                      focus:outline-none focus:border-gray-400 placeholder:text-xs
+                      text-neutral-800 flex flex-col "
+            />
+            
+            {/* 비밀번호 입력 필드 */}
+            <input
+              type="password"
+              name="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="비밀번호"
+              aria-label="비밀번호"
+              className="w-[40%] px-2 py-[9px] bg-[#fafafa] text-sm border border-gray-300 rounded-sm
+                      focus:outline-none focus:border-gray-400 placeholder:text-xs
+                      text-neutral-800 flex flex-col"
+            />
+            
+            {/* 로그인 버튼: Instagram 브랜드 색상 사용 */}
+            <button
+              type="submit"
+              className="w-[40%] mt-2 bg-[#0095F6] text-white py-[7px]
+              rounded text-sm font-semibold
+              hover:bg-[#0095F6]/90 transition-colors
+              disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              로그인
+            </button>
+
+            {/* 비밀번호 찾기 링크 */}
+            <div className="text-center mt-4">
+              <Link
+                to="/find-password"
+                className="text text-xs hover:text-[#4CB5F9]/90"
+              >
+                비밀번호를 잊으셨나요?
+              </Link>
+            </div>
+          </form>
+        </div>
+        
+        {/* 회원가입 링크 컨테이너 */}
+        <div className="py-4 text-center">
+          <span className="text-neutral-500 text-[14px]">계정이 없으신가요?</span>
+          <Link
+            to="/signup"
+            className="text-[#4CB5F9] font-semibold text-[14px] hover:text-[#4CB5F9]/90"
+          >
+            가입하기
+          </Link>
+        </div>
+      </div>
   );
-}
+};
+
+export default Login;
