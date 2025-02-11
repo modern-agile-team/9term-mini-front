@@ -1,43 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState , useEffect } from 'react';
 import logoSvg from '/assets/icons/logo.svg';
 import { Link } from 'react-router-dom';
+import validateAuth from './utils'
+
 
 const Signup = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  useEffect(() => {
+    setError('');
+  }, [email, password]);
 
   // 폼 제출 처리 함수
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // 기본적인 유효성 검사
-    if (!email || !password) {
-      setError('이메일과 비밀번호를 모두 입력해주세요.');
+    const validation = validateAuth({ email, password });
+    if (!validation.isValid) {
+      setError(validation.error);
       return;
     }
 
-    // 이메일 형식 검증
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      setError('올바른 이메일 형식을 입력해주세요.');
-      return;
-    }
-
-    // 비밀번호 길이 검증
-    if (password.length < 6) {
-      setError('비밀번호는 최소 6자 이상이어야 합니다.');
-      return;
-    }
-
-    // 회원가입 시도 로직 (아직 API 연결 전)
+    // 회원가입 시도 로직 (아직 API 연결 전)  
     try {
-      console.log('회원가입 시도', { email, password });
       // 여기에 실제 API 호출 로직 추가
       setError(''); // 에러 초기화
     } catch (error) {
       setError('회원가입에 실패했습니다. 다시 시도해주세요.');
-      console.error('회원가입 실패', error);
     }
   };
 

@@ -1,37 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState , useEffect} from 'react';
 import logoSvg from '/assets/icons/logo.svg';
 import { Link } from 'react-router-dom';
+import validateAuth from './utils'
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  useEffect(() => {
+    setError('');
+  }, [email, password]);
 
   // 폼 제출 처리 함수
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // 기본적인 유효성 검사
-    if (!email || !password) {
-      setError('이메일과 비밀번호를 모두 입력해주세요.');
+    const validation = validateAuth({ email, password });
+    if (!validation.isValid) {
+      setError(validation.error);
       return;
     }
-
-    // 이메일 형식 검증
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      setError('올바른 이메일 형식을 입력해주세요.');
-      return;
-    }
+ 
 
     // 로그인 시도 로직 (아직 API 연결 전)
     try {
-      console.log('로그인 시도', { email, password });
       // 여기에 실제 API 호출 로직 추가
       setError(''); // 에러 초기화
     } catch (error) {
       setError('로그인에 실패했습니다. 다시 시도해주세요.');
-      console.error('로그인 실패', error);
     }
   };
 
@@ -105,7 +101,7 @@ const Login = () => {
         
         {/* 회원가입 링크 컨테이너 */}
         <div className="py-4 text-center">
-          <span className="text-neutral-500 text-[14px]">계정이 없으신가요?</span>{' '}
+          <span className="text-neutral-500 text-[14px]">계정이 없으신가요?</span>
           <Link
             to="/signup"
             className="text-[#4CB5F9] font-semibold text-[14px] hover:text-[#4CB5F9]/90"
