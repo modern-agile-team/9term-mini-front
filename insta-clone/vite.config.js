@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'; // Vite 설정을 정의하기 위한 함수를 import
 import react from '@vitejs/plugin-react-swc'; // React와 SWC(Rust 기반 컴파일러)를 사용하기 위한 플러그인
 import tailwindcss from '@tailwindcss/vite'; // Tailwind CSS를 Vite에서 사용하기 위한 플러그인
+import path from 'path';
 
 // https://vitejs.dev/config/ - Vite 공식 설정 문서 링크
 export default defineConfig({
@@ -8,6 +9,12 @@ export default defineConfig({
     react(), // React 플러그인 활성화 (JSX 컴파일 등을 지원)
     tailwindcss(), // Tailwind CSS 플러그인 활성화 (스타일 처리)
   ],
+  resolve: {
+    // resolve를 server 밖으로 이동
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
   server: {
     port: 5173, // 개발 서버가 실행될 포트 번호 지정
     // CORS(Cross-Origin Resource Sharing) 이슈 해결을 위한 프록시 설정
