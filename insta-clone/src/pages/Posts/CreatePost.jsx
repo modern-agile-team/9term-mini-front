@@ -68,17 +68,16 @@ const CreatePost = ({ onClose }) => {
           >
             취소
           </button>
-          <h2 className="text-base pl-7 font-semibold">새 게시물 만들기</h2>
-          <button
-            className={`text-sm font-medium ${
-              selectedImage
-                ? 'text-[#0095F6] hover:text-[#1877F2] cursor-pointer'
-                : 'text-[#0095F6]/40 cursor-not-allowed'
-            } transition-colors`}
-            disabled={!selectedImage}
-          >
-            공유하기
-          </button>
+          <h2 className="text-base font-semibold pl-7 flex-1 text-center">
+            새 게시물 만들기
+          </h2>
+          {selectedImage ? (
+            <button className="text-sm font-medium text-[#0095F6] hover:text-[#1877F2] cursor-pointer transition-colors">
+              공유하기
+            </button>
+          ) : (
+            <div className="w-[64px]"></div> // 공유하기 버튼의 공간 유지
+          )}
         </div>
 
         {/* 컨텐츠 영역 - 스크롤 가능하도록 수정 */}
