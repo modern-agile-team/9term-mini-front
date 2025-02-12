@@ -39,6 +39,10 @@ const CreatePost = ({ onClose }) => {
 
       const newPost = await response.json();
       console.log('✅ 게시물 업로드 성공:', newPost);
+
+      // ✅ 업로드 성공 알림창 추가
+      alert('게시물이 업로드되었습니다.');
+
       onClose(); // 업로드 후 모달 닫기
     } catch (error) {
       console.error(error.message);
