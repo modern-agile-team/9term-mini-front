@@ -57,7 +57,7 @@ const CreatePost = ({ onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-      <div className="bg-white w-full max-w-[500px] rounded-xl h-[min(90vh,700px)] flex flex-col">
+      <div className="bg-white w-full max-w-[500px]  rounded-xl h-[min(90vh,500px)] flex flex-col ">
         {/* 헤더 */}
         <div className="flex items-center justify-between p-3 border-b border-gray-200">
           <button onClick={handleCancel} className="text-sm font-medium text-black hover:text-gray-600 transition-colors">
@@ -71,15 +71,15 @@ const CreatePost = ({ onClose }) => {
                 : 'text-[#0095F6]/40 cursor-not-allowed'
             } transition-colors`}
             disabled={!selectedImage}
-          >
+          > 
             공유하기
-          </button>
+          </button>                                                             
         </div>
 
         {/* 컨텐츠 영역 - 스크롤 가능하도록 수정 */}
-        <div className="flex-1 overflow-y-auto">
+        <div className=" overflow-y-auto flex flex-col items-center pt-10">
           <div 
-            className={`flex ${selectedImage ? 'flex-col' : ''} min-h-[400px]
+            className={`flex ${selectedImage ? 'flex-col' : ''}
               ${dragActive ? 'bg-black/5' : 'bg-white'}
               transition-colors duration-200`}
             onDragEnter={handleDrag}
@@ -89,7 +89,7 @@ const CreatePost = ({ onClose }) => {
           >
             {selectedImage ? (
               <>
-                <div className="w-full h-[300px] bg-black flex items-center justify-center">
+                <div className="w-full h-[250px] bg-black flex items-center justify-center">
                   <img 
                     src={selectedImage} 
                     alt="Preview" 
@@ -97,28 +97,25 @@ const CreatePost = ({ onClose }) => {
                   />
                 </div>
                 {/* 글쓰기 영역 */}
-                <div className="p-4 border-t">
+                <div className="border-t w-full">
                   <textarea
                     value={caption}
                     onChange={(e) => setCaption(e.target.value)}
                     placeholder="문구 입력..."
-                    className="w-full h-24 resize-none border-none focus:ring-0 text-sm"
-                    maxLength={2200}
+                    className="w-full h-24 resize-none border-none focus:ring-0 focus:outline-none text-sm"
+                    maxLength={500}
                   />
-                  <div className="flex justify-between items-center text-sm text-gray-500">
-                    <span>{caption.length}/2,200</span>
-                    <button className="text-[#0095F6]">이모티콘</button>
+                  <div className="flex justify-end items-center text-sm text-gray-500">
+                    <span>{caption.length}/500</span>
                   </div>
                 </div>
-              </>
+              </> 
             ) : (
-              <div className="text-center px-4 py-20">
-                <div className="mx-auto mb-6">
-                  <div className="w-20 h-20 mx-auto border-2 border-black rounded-lg flex items-center justify-center">
-                    <span className="text-4xl">+</span>
-                  </div>
+              <div className="text-center flex-col justify-center items-center px-4 py-20">
+                <div className="mx-auto mb-6 flex flex-col justify-center items-center">
+                 <img src='/assets/icons/photo.svg '/>
                 </div>
-                <h3 className="text-[22px] mb-4">사진을 여기에 끌어다 놓으세요</h3>
+                <h3 className="text-lg mb-4">사진을 여기에 끌어다 놓으세요</h3>
                 <input
                   ref={inputRef}
                   type="file"
