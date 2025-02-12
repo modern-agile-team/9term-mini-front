@@ -19,7 +19,7 @@ const CreatePost = ({ onClose }) => {
 
   // API: 게시물 등록
   const handleUpload = async () => {
-    if (!selectedImage || !caption.trim()) return;
+    if (!selectedImage) return;
 
     try {
       const response = await fetch('/api/posts', {
