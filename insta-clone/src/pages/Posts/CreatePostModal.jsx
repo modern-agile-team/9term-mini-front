@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 
-const CreatePost = ({ onClose }) => {
+const CreatePostModal = ({ onClose }) => {
   const [dragActive, setDragActive] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [caption, setCaption] = useState('');
@@ -143,4 +143,4 @@ const CreatePost = ({ onClose }) => {
   );
 };
 
-export default CreatePost;
+export default CreatePostModal;

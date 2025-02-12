@@ -1,6 +1,6 @@
 // src/pages/Home/Navbar.jsx
 import { useState } from 'react';
-import CreatePost from '@/pages/Posts/CreatePost';
+import CreatePostModal from '@/pages/Posts/CreatePostModal';
 
 const Navbar = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -18,14 +18,14 @@ const Navbar = () => {
         >
           <img
             src="/assets/icons/plus.svg"
-            alt="Create Post"
+            alt="Create Post Modal"
             className="w-7 h-7"
           />
         </button>
       </nav>
 
       {/* ✅ CreatePost 모달 추가 */}
-      {isModalOpen && <CreatePost onClose={() => setIsModalOpen(false)} />}
+      {isModalOpen && <CreatePostModal onClose={() => setIsModalOpen(false)} />}
     </>
   );
 };
