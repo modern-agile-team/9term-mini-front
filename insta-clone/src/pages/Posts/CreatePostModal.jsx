@@ -17,6 +17,25 @@ const CreatePostModal = ({ onClose }) => {
     }
   };
 
+  // 드래그 & 드롭 이벤트 핸들러
+  const handleDragOver = e => {
+    e.preventDefault();
+    setDragActive(true);
+  };
+
+  const handleDragLeave = e => {
+    e.preventDefault();
+    setDragActive(false);
+  };
+
+  const handleDrop = e => {
+    e.preventDefault();
+    setDragActive(false);
+
+    const file = e.dataTransfer.files[0];
+    handleFile(file);
+  };
+
   // API: 게시물 등록
   const handleUpload = async () => {
     if (!selectedImage) return;
@@ -64,7 +83,7 @@ const CreatePostModal = ({ onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-      <div className="bg-white w-full max-w-[500px]  rounded-xl h-[min(90vh,500px)] flex flex-col ">
+      <div className="bg-white w-full max-w-[500px] rounded-xl h-[min(90vh,500px)] flex flex-col">
         {/* 헤더 */}
         <div className="relative flex items-center justify-center p-3 border-b border-gray-200">
           <button
@@ -85,11 +104,16 @@ const CreatePostModal = ({ onClose }) => {
         </div>
 
         {/* 컨텐츠 영역 */}
-        <div className="overflow-y-auto flex flex-col items-center pt-10">
+        <div
+          className={`overflow-y-auto flex flex-col items-center pt-10 ${
+            dragActive ? 'bg-gray-100' : 'bg-white'
+          }`}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
           <div
-            className={`flex ${selectedImage ? 'flex-col' : ''}
-              ${dragActive ? 'bg-black/5' : 'bg-white'}
-              transition-colors duration-200`}
+            className={`flex ${selectedImage ? 'flex-col' : ''} transition-colors duration-200`}
           >
             {selectedImage ? (
               <>
@@ -117,9 +141,13 @@ const CreatePostModal = ({ onClose }) => {
             ) : (
               <div className="text-center flex-col justify-center items-center px-4 py-20">
                 <div className="mx-auto mb-6 flex flex-col justify-center items-center">
-                  <img src="/assets/icons/photo.svg " />
+                  <img src="/assets/icons/photo.svg" />
                 </div>
-                <h3 className="text-lg mb-4">사진을 여기에 끌어다 놓으세요</h3>
+                <h3 className="text-lg mb-4">
+                  {dragActive
+                    ? '사진을 놓아주세요!'
+                    : '사진을 여기에 끌어다 놓으세요'}
+                </h3>
                 <input
                   ref={inputRef}
                   type="file"
