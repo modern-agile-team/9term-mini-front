@@ -4,7 +4,14 @@ import useCurrentUser from '@/hooks/useCurrentUser';
 import useLike from '@/hooks/useLike';
 import useComments from '@/hooks/useComments';
 
-const FeedCard = ({ username, image, caption, likes = 0, comments = [] }) => {
+const FeedCard = ({
+  id,
+  username,
+  image,
+  caption,
+  likes = 0,
+  comments = [],
+}) => {
   const [showComments, setShowComments] = useState(false);
   const currentUser = useCurrentUser();
   const { likeCount, isLiked, toggleLike } = useLike(likes);
@@ -13,6 +20,51 @@ const FeedCard = ({ username, image, caption, likes = 0, comments = [] }) => {
     currentUser
   );
 
+  // ✅ 게시물 수정 핸들러
+  const handleEditPost = async () => {
+    const newCaption = prompt('새로운 캡션을 입력하세요:', caption);
+    if (!newCaption) return;
+
+    try {
+      const response = await fetch(`/api/posts/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ caption: newCaption }),
+      });
+
+      if (!response.ok) {
+        throw new Error('게시물 수정 실패');
+      }
+
+      alert('게시물이 수정되었습니다.');
+      window.location.reload(); // 새로고침하여 변경된 내용 반영
+    } catch (error) {
+      console.error(error.message);
+    }
+  };
+
+  // ✅ 게시물 삭제 핸들러
+  const handleDeletePost = async () => {
+    if (!window.confirm('정말로 이 게시물을 삭제하시겠습니까?')) return;
+
+    try {
+      const response = await fetch(`/api/posts/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('게시물 삭제 실패');
+      }
+
+      alert('게시물이 삭제되었습니다.');
+      window.location.reload(); // 새로고침하여 목록에서 삭제된 내용 반영
+    } catch (error) {
+      console.error(error.message);
+    }
+  };
+
   // ✅ 로그인된 사용자 정보가 아직 로딩 중이면 로딩 화면 표시
   if (currentUser === null) {
     return <p>로딩 중...</p>;
@@ -20,15 +72,32 @@ const FeedCard = ({ username, image, caption, likes = 0, comments = [] }) => {
 
   return (
     <div className="p-4 mb-4 bg-white w-full max-w-lg mx-auto">
-      <div className="flex items-center space-x-2 mb-2">
-        <img
-          src="/assets/icons/profile.svg"
-          alt="Profile"
-          className="w-8 h-8 rounded-full"
-        />
-        <span className="font-bold text-xs">{username}</span>
+      {/* 프로필 & 수정/삭제 버튼 */}
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center space-x-2">
+          <img
+            src="/assets/icons/profile.svg"
+            alt="Profile"
+            className="w-8 h-8 rounded-full"
+          />
+          <span className="font-bold text-xs">{username}</span>
+        </div>
+        {currentUser === username && (
+          <div className="flex space-x-2">
+            <button onClick={handleEditPost} className="text-blue-500 text-xs">
+              수정
+            </button>
+            <button onClick={handleDeletePost} className="text-red-500 text-xs">
+              삭제
+            </button>
+          </div>
+        )}
       </div>
+
+      {/* 게시물 이미지 */}
       <img src={image} alt="Post" className="w-full rounded-xs" />
+
+      {/* 게시물 정보 */}
       <div className="mt-2 px-2">
         <div className="flex items-center space-x-4 mb-2">
           <img
@@ -56,6 +125,8 @@ const FeedCard = ({ username, image, caption, likes = 0, comments = [] }) => {
         >
           댓글 {commentList.length}개 모두보기
         </p>
+
+        {/* 댓글 리스트 */}
         {showComments && (
           <div className="mt-2">
             {commentList.map(comment => (
