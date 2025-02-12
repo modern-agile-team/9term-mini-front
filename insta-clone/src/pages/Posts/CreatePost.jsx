@@ -1,4 +1,3 @@
-// src/pages/Posts/CreatePost.jsx
 import { useState, useRef } from 'react';
 
 const CreatePost = ({ onClose }) => {
@@ -18,30 +17,32 @@ const CreatePost = ({ onClose }) => {
     }
   };
 
-  // 드래그 이벤트 핸들러
-  const handleDrag = e => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === 'dragenter' || e.type === 'dragover') {
-      setDragActive(true);
-    } else if (e.type === 'dragleave') {
-      setDragActive(false);
+  // API: 게시물 등록
+  const handleUpload = async () => {
+    if (!selectedImage || !caption.trim()) return;
+
+    try {
+      const response = await fetch('/api/posts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          image: selectedImage,
+          caption,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('게시물 업로드 실패');
+      }
+
+      const newPost = await response.json();
+      console.log('✅ 게시물 업로드 성공:', newPost);
+      onClose(); // 업로드 후 모달 닫기
+    } catch (error) {
+      console.error(error.message);
     }
-  };
-
-  // 드롭 이벤트 핸들러
-  const handleDrop = e => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    const file = e.dataTransfer.files[0];
-    handleFile(file);
-  };
-
-  // 파일 입력 변경 핸들러
-  const handleChange = e => {
-    const file = e.target.files[0];
-    handleFile(file);
   };
 
   // 취소 버튼 핸들러
@@ -61,35 +62,30 @@ const CreatePost = ({ onClose }) => {
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
       <div className="bg-white w-full max-w-[500px]  rounded-xl h-[min(90vh,500px)] flex flex-col ">
         {/* 헤더 */}
-        <div className="flex items-center justify-between p-3 border-b border-gray-200">
+        <div className="relative flex items-center justify-center p-3 border-b border-gray-200">
           <button
             onClick={handleCancel}
-            className="text-sm font-medium text-black hover:text-gray-600 transition-colors"
+            className="absolute left-3 text-sm font-medium text-black hover:text-gray-600 transition-colors"
           >
             취소
           </button>
-          <h2 className="text-base font-semibold pl-7 flex-1 text-center">
-            새 게시물 만들기
-          </h2>
-          {selectedImage ? (
-            <button className="text-sm font-medium text-[#0095F6] hover:text-[#1877F2] cursor-pointer transition-colors">
+          <h2 className="text-base font-semibold">새 게시물 만들기</h2>
+          {selectedImage && (
+            <button
+              onClick={handleUpload}
+              className="absolute right-3 text-sm font-medium text-[#0095F6] hover:text-[#1877F2] cursor-pointer transition-colors"
+            >
               공유하기
             </button>
-          ) : (
-            <div className="w-[64px]"></div> // 공유하기 버튼의 공간 유지
           )}
         </div>
 
-        {/* 컨텐츠 영역 - 스크롤 가능하도록 수정 */}
-        <div className=" overflow-y-auto flex flex-col items-center pt-10">
+        {/* 컨텐츠 영역 */}
+        <div className="overflow-y-auto flex flex-col items-center pt-10">
           <div
             className={`flex ${selectedImage ? 'flex-col' : ''}
               ${dragActive ? 'bg-black/5' : 'bg-white'}
               transition-colors duration-200`}
-            onDragEnter={handleDrag}
-            onDragLeave={handleDrag}
-            onDragOver={handleDrag}
-            onDrop={handleDrop}
           >
             {selectedImage ? (
               <>
@@ -101,7 +97,7 @@ const CreatePost = ({ onClose }) => {
                   />
                 </div>
                 {/* 글쓰기 영역 */}
-                <div className="border-t w-full">
+                <div className="border-t w-full p-3">
                   <textarea
                     value={caption}
                     onChange={e => setCaption(e.target.value)}
@@ -124,15 +120,13 @@ const CreatePost = ({ onClose }) => {
                   ref={inputRef}
                   type="file"
                   accept="image/*"
-                  onChange={handleChange}
+                  onChange={e => handleFile(e.target.files[0])}
                   className="hidden"
                   id="fileInput"
                 />
                 <label
                   htmlFor="fileInput"
-                  className="inline-block bg-[#0095F6] text-white px-4 py-2 rounded-lg
-                           text-sm font-medium cursor-pointer hover:bg-[#1877F2] 
-                           transition-colors duration-200"
+                  className="inline-block bg-[#0095F6] text-white px-4 py-2 rounded-lg text-sm font-medium cursor-pointer hover:bg-[#1877F2] transition-colors duration-200"
                 >
                   컴퓨터에서 선택
                 </label>
