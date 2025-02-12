@@ -32,7 +32,7 @@ let posts = [
 let users = [
   {
     email: '123@gmail.com',
-    username: 'moc123',
+    username: '123',
     password: 'password123',
   },
 ];
@@ -149,6 +149,39 @@ export const handlers = [
 
     posts.push(newPost);
     return HttpResponse.json(newPost, { status: 201 });
+  }),
+
+  // ✅ 게시물 수정 (PATCH)
+  http.patch('/api/posts/:id', async ({ params, request }) => {
+    const { id } = params;
+    const updateData = await request.json();
+    const postIndex = posts.findIndex(post => post.id === Number(id));
+
+    if (postIndex === -1) {
+      return HttpResponse.json(
+        { error: '게시물을 찾을 수 없습니다.' },
+        { status: 404 }
+      );
+    }
+
+    posts[postIndex] = { ...posts[postIndex], ...updateData };
+    return HttpResponse.json(posts[postIndex]);
+  }),
+
+  // ✅ 게시물 삭제 (DELETE)
+  http.delete('/api/posts/:id', async ({ params }) => {
+    const { id } = params;
+    const postIndex = posts.findIndex(post => post.id === Number(id));
+
+    if (postIndex === -1) {
+      return HttpResponse.json(
+        { error: '게시물을 찾을 수 없습니다.' },
+        { status: 404 }
+      );
+    }
+
+    posts = posts.filter(post => post.id !== Number(id));
+    return HttpResponse.json({ message: '게시물이 삭제되었습니다.' });
   }),
 
   // ✅ 게시물 좋아요 / 취소 (중복 방지)
