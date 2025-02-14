@@ -135,7 +135,7 @@ const FeedCard = ({
                 className="flex justify-between items-center"
               >
                 <p className="text-sm">
-                  <span className="font-bold">{comment.username}</span>{' '}
+                  <span className="font-bold">{comment.username}</span>&nbsp;
                   {comment.text}
                 </p>
                 {currentUser === comment.username && (
