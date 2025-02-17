@@ -13,7 +13,7 @@ const Navbar = () => {
         </div>
         {/* 🔹 + 버튼 클릭 시 모달 열기 */}
         <button
-          className="p-2 rounded-full hover:bg-gray-100 transition"
+          className="p-2 rounded-full hover:bg-gray-100 transition cursor-pointer"
           onClick={() => setIsModalOpen(true)}
         >
           <img
