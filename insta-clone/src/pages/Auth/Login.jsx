@@ -43,7 +43,7 @@ const Login = () => {
       }
 
       console.log('✅ 로그인 성공:', data);
-      navigate('/home'); // ✅ 로그인 성공 시 Home으로 이동
+      navigate('/'); // ✅ 로그인 성공 시 Home으로 이동
     } catch (error) {
       setError(error.message);
     } finally {
