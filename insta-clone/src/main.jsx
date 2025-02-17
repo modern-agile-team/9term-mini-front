@@ -11,9 +11,5 @@ if (process.env.NODE_ENV === 'development') {
   createRoot(document.getElementById('root')).render(<App />);
 } else {
   // 🚀 배포 환경에서는 MSW 없이 바로 React 렌더링
-  createRoot(document.getElementById('root')).render(
-    <StrictMode>
-      <App />
-    </StrictMode>
-  );
+  createRoot(document.getElementById('root')).render(<App />);
 }
