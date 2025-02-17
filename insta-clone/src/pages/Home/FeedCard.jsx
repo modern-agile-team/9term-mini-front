@@ -1,22 +1,19 @@
 import { useState } from 'react';
 import CommentInput from '@/pages/Home/CommentInput';
+import CommentList from '@/pages/Home/CommentList';
 import useCurrentUser from '@/hooks/useCurrentUser';
 import useLike from '@/hooks/useLike';
 import useComments from '@/hooks/useComments';
 
-const FeedCard = ({
-  id,
-  username,
-  image,
-  caption,
-  likes = 0,
-  comments = [],
-}) => {
+const FeedCard = ({ id, username, image, caption, likes = 0 }) => {
+  // ✅ `comments` prop 제거
   const [showComments, setShowComments] = useState(false);
   const currentUser = useCurrentUser();
   const { likeCount, isLiked, toggleLike } = useLike(likes);
-  const { commentList, addComment, deleteComment } = useComments(
-    comments,
+
+  // ✅ `useComments`에서 `postId`를 전달하여 서버에서 댓글 관리
+  const { commentList, addComment, deleteComment, loading } = useComments(
+    id,
     currentUser
   );
 
@@ -28,18 +25,14 @@ const FeedCard = ({
     try {
       const response = await fetch(`/api/posts/${id}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ caption: newCaption }),
       });
 
-      if (!response.ok) {
-        throw new Error('게시물 수정 실패');
-      }
+      if (!response.ok) throw new Error('게시물 수정 실패');
 
       alert('게시물이 수정되었습니다.');
-      window.location.reload(); // 새로고침하여 변경된 내용 반영
+      window.location.reload();
     } catch (error) {
       console.error(error.message);
     }
@@ -50,25 +43,18 @@ const FeedCard = ({
     if (!window.confirm('정말로 이 게시물을 삭제하시겠습니까?')) return;
 
     try {
-      const response = await fetch(`/api/posts/${id}`, {
-        method: 'DELETE',
-      });
+      const response = await fetch(`/api/posts/${id}`, { method: 'DELETE' });
 
-      if (!response.ok) {
-        throw new Error('게시물 삭제 실패');
-      }
+      if (!response.ok) throw new Error('게시물 삭제 실패');
 
       alert('게시물이 삭제되었습니다.');
-      window.location.reload(); // 새로고침하여 목록에서 삭제된 내용 반영
+      window.location.reload();
     } catch (error) {
       console.error(error.message);
     }
   };
 
-  // ✅ 로그인된 사용자 정보가 아직 로딩 중이면 로딩 화면 표시
-  if (currentUser === null) {
-    return <p>로딩 중...</p>;
-  }
+  if (currentUser === null) return <p>로딩 중...</p>;
 
   return (
     <div className="p-4 mb-4 bg-white w-full max-w-lg mx-auto">
@@ -126,31 +112,21 @@ const FeedCard = ({
           댓글 {commentList.length}개 모두보기
         </p>
 
-        {/* 댓글 리스트 */}
+        {/* 댓글 리스트 & 입력창 */}
         {showComments && (
-          <div className="mt-2">
-            {commentList.map(comment => (
-              <div
-                key={comment.id}
-                className="flex justify-between items-center"
-              >
-                <p className="text-sm">
-                  <span className="font-bold">{comment.username}</span>&nbsp;
-                  {comment.text}
-                </p>
-                {currentUser === comment.username && (
-                  <button
-                    className="text-red-500 text-xs ml-2"
-                    onClick={() => deleteComment(comment.id)}
-                  >
-                    삭제
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
+          <>
+            {loading ? (
+              <p>댓글 불러오는 중...</p> // ✅ 댓글 로딩 중 표시
+            ) : (
+              <CommentList
+                comments={commentList}
+                currentUser={currentUser}
+                onDeleteComment={deleteComment}
+              />
+            )}
+            <CommentInput onAddComment={addComment} />
+          </>
         )}
-        <CommentInput onAddComment={addComment} />
       </div>
     </div>
   );

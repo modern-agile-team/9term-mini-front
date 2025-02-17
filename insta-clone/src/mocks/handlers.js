@@ -48,7 +48,12 @@ const hashPassword = async password => {
 
 const getSessionUser = () => {
   const session = sessionStorage.getItem('sessionUser');
-  return session ? JSON.parse(session) : null;
+  if (session) return JSON.parse(session);
+
+  // ✅ 기본 로그인 유저 설정 (디버깅용)
+  const defaultUser = { email: '123@gmail.com', username: '123' };
+  sessionStorage.setItem('sessionUser', JSON.stringify(defaultUser));
+  return defaultUser;
 };
 
 const setSessionUser = user => {
