@@ -5,21 +5,19 @@ import useCurrentUser from '@/hooks/useCurrentUser';
 import useLike from '@/hooks/useLike';
 import useComments from '@/hooks/useComments';
 
-const FeedCard = ({ id, username, image, caption, likes = 0 }) => {
-  // ✅ `comments` prop 제거
+const FeedCard = ({ id, username, image, caption, likes = 0, onDelete }) => {
+  const [postCaption, setPostCaption] = useState(caption); // ✅ caption 상태 추가
   const [showComments, setShowComments] = useState(false);
   const currentUser = useCurrentUser();
   const { likeCount, isLiked, toggleLike } = useLike(likes);
-
-  // ✅ `useComments`에서 `postId`를 전달하여 서버에서 댓글 관리
   const { commentList, addComment, deleteComment, loading } = useComments({
     postId: id,
     currentUser,
   });
 
-  // ✅ 게시물 수정 핸들러
+  // ✅ 게시물 수정 핸들러 (새로고침 없이 UI 업데이트)
   const handleEditPost = async () => {
-    const newCaption = prompt('새로운 캡션을 입력하세요:', caption);
+    const newCaption = prompt('새로운 캡션을 입력하세요:', postCaption);
     if (!newCaption) return;
 
     try {
@@ -32,13 +30,13 @@ const FeedCard = ({ id, username, image, caption, likes = 0 }) => {
       if (!response.ok) throw new Error('게시물 수정 실패');
 
       alert('게시물이 수정되었습니다.');
-      window.location.reload();
+      setPostCaption(newCaption); // ✅ 상태 업데이트로 UI 변경
     } catch (error) {
       console.error(error.message);
     }
   };
 
-  // ✅ 게시물 삭제 핸들러
+  // ✅ 게시물 삭제 핸들러 (onDelete를 부모에서 받아 처리)
   const handleDeletePost = async () => {
     if (!window.confirm('정말로 이 게시물을 삭제하시겠습니까?')) return;
 
@@ -48,7 +46,7 @@ const FeedCard = ({ id, username, image, caption, likes = 0 }) => {
       if (!response.ok) throw new Error('게시물 삭제 실패');
 
       alert('게시물이 삭제되었습니다.');
-      window.location.reload();
+      onDelete(id); // ✅ 부모 컴포넌트에서 상태 업데이트하여 UI에서 제거
     } catch (error) {
       console.error(error.message);
     }
@@ -103,7 +101,7 @@ const FeedCard = ({ id, username, image, caption, likes = 0 }) => {
         </div>
         <p className="text-sm font-bold">좋아요 {likeCount}개</p>
         <p className="text-sm mt-1">
-          <span className="font-bold">{username}</span> {caption}
+          <span className="font-bold">{username}</span> {postCaption}
         </p>
         <p
           className="text-xs text-gray-500 mt-1 cursor-pointer"
@@ -116,7 +114,7 @@ const FeedCard = ({ id, username, image, caption, likes = 0 }) => {
         {showComments && (
           <>
             {loading ? (
-              <p>댓글 불러오는 중...</p> // ✅ 댓글 로딩 중 표시
+              <p>댓글 불러오는 중...</p>
             ) : (
               <CommentList
                 comments={commentList}
