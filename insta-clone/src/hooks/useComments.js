@@ -2,12 +2,12 @@ import { useState, useEffect } from 'react';
 
 const useComments = (postId, currentUser) => {
   const [commentList, setCommentList] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!currentUser) {
-      setLoading(false);
-      return; // 🚨 로그인 안 되어 있으면 API 호출 안 함
+    if (!postId) {
+      setIsLoading(false);
+      return;
     }
 
     const fetchComments = async () => {
@@ -21,7 +21,7 @@ const useComments = (postId, currentUser) => {
       } catch (error) {
         console.error(error);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
@@ -29,11 +29,6 @@ const useComments = (postId, currentUser) => {
   }, [postId, currentUser]);
 
   const addComment = async newComment => {
-    if (!currentUser) {
-      alert('로그인이 필요합니다.');
-      return;
-    }
-
     try {
       const response = await fetch(`/api/posts/${postId}/comments`, {
         method: 'POST',
@@ -52,7 +47,7 @@ const useComments = (postId, currentUser) => {
     }
   };
 
-  return { commentList, addComment, loading };
+  return { commentList, addComment, isLoading };
 };
 
 export default useComments;
