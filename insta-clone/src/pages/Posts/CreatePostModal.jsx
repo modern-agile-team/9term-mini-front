@@ -95,7 +95,8 @@ const CreatePostModal = ({ onClose }) => {
      />
 </button>
       
-      <div className="bg-white w-full max-w-[500px] rounded-xl h-[min(90vh,500px)] flex flex-col">
+      <div className="bg-white w-full max-w-[500px] rounded-xl h-[min(90vh,500px)] flex flex-col"
+      onClick={(e) => e.stopPropagation()}>
         {/* 헤더 */}
         <div className="relative flex items-center justify-center p-3 border-b border-gray-200">
         
