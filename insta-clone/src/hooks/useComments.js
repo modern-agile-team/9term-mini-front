@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 
-const useComments = (postId, currentUser) => {
+const useComments = ({ postId, currentUser }) => {
   const [commentList, setCommentList] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (!postId) {
       setIsLoading(false);
-      return;
+      return; // ✅ postId가 없으면 API 요청 안 함
     }
 
     const fetchComments = async () => {

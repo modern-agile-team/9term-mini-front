@@ -12,10 +12,10 @@ const FeedCard = ({ id, username, image, caption, likes = 0 }) => {
   const { likeCount, isLiked, toggleLike } = useLike(likes);
 
   // ✅ `useComments`에서 `postId`를 전달하여 서버에서 댓글 관리
-  const { commentList, addComment, deleteComment, loading } = useComments(
-    id,
-    currentUser
-  );
+  const { commentList, addComment, deleteComment, loading } = useComments({
+    postId: id,
+    currentUser,
+  });
 
   // ✅ 게시물 수정 핸들러
   const handleEditPost = async () => {
