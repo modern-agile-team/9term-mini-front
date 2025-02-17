@@ -1,5 +1,12 @@
 import { http, HttpResponse } from 'msw';
 
+let users = [
+  {
+    email: '123@gmail.com',
+    username: '123',
+    password: 'password123',
+  },
+];
 let posts = [
   {
     id: 1,
@@ -29,95 +36,88 @@ let posts = [
   },
 ];
 
-let users = [
-  {
-    email: '123@gmail.com',
-    username: '123',
-    password: 'password123',
-  },
-];
-
-// ✅ 로그인된 유저를 LocalStorage에 저장하여 유지
-const getLoggedInUser = () => {
-  const savedUser = localStorage.getItem('loggedInUser');
-  return savedUser ? JSON.parse(savedUser) : null;
+// ✅ SHA-256 해싱 함수 (bcrypt 대체)
+const hashPassword = async password => {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hashBuffer))
+    .map(byte => byte.toString(16).padStart(2, '0'))
+    .join('');
 };
 
-const setLoggedInUser = user => {
-  localStorage.setItem('loggedInUser', JSON.stringify(user));
+const getSessionUser = () => {
+  const session = sessionStorage.getItem('sessionUser');
+  return session ? JSON.parse(session) : null;
 };
 
-const removeLoggedInUser = () => {
-  localStorage.removeItem('loggedInUser');
+const setSessionUser = user => {
+  sessionStorage.setItem('sessionUser', JSON.stringify(user));
+};
+
+const clearSessionUser = () => {
+  sessionStorage.removeItem('sessionUser');
 };
 
 export const handlers = [
-  // ✅ 현재 로그인된 사용자 정보 조회
-  http.get('/api/user', async () => {
-    const loggedInUser = getLoggedInUser();
-    if (!loggedInUser) {
-      return HttpResponse.json(
-        { error: '로그인이 필요합니다' },
-        { status: 401 }
-      );
-    }
-    return HttpResponse.json({
-      email: loggedInUser.email,
-      username: loggedInUser.username,
-    });
-  }),
-
-  // ✅ 회원가입 (이메일 기반)
-  http.post('/api/signup', async ({ request }) => {
-    const { email, password } = await request.json();
+  // ✅ 회원가입 (`POST /api/register`)
+  http.post('/api/register', async ({ request }) => {
+    const { email, pwd, profile_image } = await request.json();
 
     if (!email.includes('@') || !email.includes('.')) {
       return HttpResponse.json(
-        { error: '유효한 이메일을 입력하세요.' },
+        { success: false, msg: '유효한 이메일을 입력하세요.' },
         { status: 400 }
       );
     }
 
     if (users.some(user => user.email === email)) {
       return HttpResponse.json(
-        { error: '이미 가입된 이메일입니다.' },
+        { success: false, msg: '이미 존재하는 이메일입니다.' },
         { status: 409 }
       );
     }
 
-    const username = email.split('@')[0];
-    const newUser = { email, username, password };
-    users.push(newUser);
+    // ✅ SHA-256으로 비밀번호 해싱
+    const hashedPwd = await hashPassword(pwd);
+    const newUser = { email, pwd: hashedPwd, profile_image };
 
-    console.log('✅ 회원가입 성공:', newUser);
+    users.push(newUser);
     return HttpResponse.json(
-      { message: '회원가입 성공', user: newUser },
+      { success: true, msg: '회원가입이 완료되었습니다.' },
       { status: 201 }
     );
   }),
 
-  // ✅ 로그인 (이메일 기반)
+  // ✅ 로그인 (`POST /api/login`)
   http.post('/api/login', async ({ request }) => {
-    const { email, password } = await request.json();
-    const user = users.find(u => u.email === email && u.password === password);
+    const { email, pwd } = await request.json();
 
+    const user = users.find(u => u.email === email);
     if (!user) {
       return HttpResponse.json(
-        { error: '이메일 또는 비밀번호가 일치하지 않습니다.' },
+        { success: false, msg: '존재하지 않는 이메일입니다.' },
         { status: 401 }
       );
     }
 
-    setLoggedInUser(user);
-    console.log('✅ 로그인 성공:', user);
+    // ✅ 비밀번호 비교 (SHA-256 해싱 후 비교)
+    const hashedPwd = await hashPassword(pwd);
+    if (hashedPwd !== user.pwd) {
+      return HttpResponse.json(
+        { success: false, msg: '비밀번호를 다시 입력해주세요.' },
+        { status: 401 }
+      );
+    }
 
-    return HttpResponse.json({ message: '로그인 성공', user });
+    setSessionUser(user);
+    return HttpResponse.json({ success: true, email: user.email });
   }),
 
-  // ✅ 로그아웃
-  http.delete('/api/logout', async () => {
-    removeLoggedInUser();
-    return HttpResponse.json({ message: '로그아웃 성공' });
+  // ✅ 로그아웃 (`POST /api/logout`)
+  http.post('/api/logout', async () => {
+    clearSessionUser();
+    return HttpResponse.json({ success: true, msg: '로그아웃 성공' });
   }),
 
   // ✅ 게시물 조회 (페이징 지원)
@@ -132,7 +132,7 @@ export const handlers = [
 
   // ✅ 게시물 추가
   http.post('/api/posts', async ({ request }) => {
-    const loggedInUser = getLoggedInUser();
+    const loggedInUser = getSessionUser();
     if (!loggedInUser) {
       return HttpResponse.json(
         { error: '로그인이 필요합니다.' },
@@ -149,23 +149,6 @@ export const handlers = [
 
     posts.push(newPost);
     return HttpResponse.json(newPost, { status: 201 });
-  }),
-
-  // ✅ 게시물 수정 (PATCH)
-  http.patch('/api/posts/:id', async ({ params, request }) => {
-    const { id } = params;
-    const updateData = await request.json();
-    const postIndex = posts.findIndex(post => post.id === Number(id));
-
-    if (postIndex === -1) {
-      return HttpResponse.json(
-        { error: '게시물을 찾을 수 없습니다.' },
-        { status: 404 }
-      );
-    }
-
-    posts[postIndex] = { ...posts[postIndex], ...updateData };
-    return HttpResponse.json(posts[postIndex]);
   }),
 
   // ✅ 게시물 삭제 (DELETE)
@@ -210,7 +193,7 @@ export const handlers = [
 
   // ✅ 댓글 추가
   http.post('/api/posts/:id/comments', async ({ params, request }) => {
-    const loggedInUser = getLoggedInUser();
+    const loggedInUser = getSessionUser();
     if (!loggedInUser) {
       return HttpResponse.json(
         { error: '로그인이 필요합니다.' },
@@ -232,26 +215,5 @@ export const handlers = [
 
     post.comments.push(newComment);
     return HttpResponse.json(newComment, { status: 201 });
-  }),
-
-  // ✅ 댓글 좋아요 기능 추가
-  http.post('/api/comments/:id/like', async ({ params }) => {
-    const { id } = params;
-    let commentFound = false;
-
-    posts.forEach(post => {
-      post.comments.forEach(comment => {
-        if (comment.id === Number(id)) {
-          comment.likes += 1;
-          commentFound = true;
-        }
-      });
-    });
-
-    if (!commentFound) {
-      return HttpResponse.json({ error: '댓글 없음' }, { status: 404 });
-    }
-
-    return HttpResponse.json({ message: '댓글 좋아요 성공' });
   }),
 ];
