@@ -1,37 +1,32 @@
-import axios from 'axios';
+import ky from 'ky';
 
-const apiClient = axios.create({
-  baseURL: 'http://43.202.196.220:3000/', // ✅ 백엔드 API 주소
-  headers: {
-    'Content-Type': 'application/json',
+const apiClient = ky.create({
+  prefixUrl: 'http://43.202.196.220:3000/', // ✅ 백엔드 API 주소
+  headers: () => {
+    const token = localStorage.getItem('token'); // ✅ JWT 토큰 가져오기
+    return {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}), // ✅ 토큰이 있을 경우 헤더 추가
+    };
   },
-  withCredentials: true, // ✅ 쿠키 기반 인증 사용 시 필요 (세션 유지)
+  credentials: 'include', // ✅ withCredentials 대체 (쿠키 인증 사용 시)
+  hooks: {
+    // ✅ 요청 전 인터셉터 (axios의 request.use 대체)
+    beforeRequest: [
+      request => {
+        console.log('API 요청 전:', request);
+      },
+    ],
+    // ✅ 응답 후 인터셉터 (axios의 response.use 대체)
+    afterResponse: [
+      async (request, options, response) => {
+        if (response.status === 401) {
+          console.error('인증 오류: 로그인 필요');
+          // 🚀 로그아웃 처리 or 로그인 페이지 이동 로직 추가 가능
+        }
+      },
+    ],
+  },
 });
-
-// ✅ 요청 인터셉터 (API 요청 전 실행)
-apiClient.interceptors.request.use(
-  config => {
-    const token = localStorage.getItem('token'); // ✅ JWT 토큰 저장 확인
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`; // ✅ 헤더에 토큰 추가
-    }
-    return config;
-  },
-  error => {
-    return Promise.reject(error);
-  }
-);
-
-// ✅ 응답 인터셉터 (API 응답 후 실행)
-apiClient.interceptors.response.use(
-  response => response,
-  error => {
-    if (error.response && error.response.status === 401) {
-      console.error('인증 오류: 로그인 필요');
-      // 🚀 로그아웃 처리 or 로그인 페이지로 이동
-    }
-    return Promise.reject(error);
-  }
-);
 
 export default apiClient;
