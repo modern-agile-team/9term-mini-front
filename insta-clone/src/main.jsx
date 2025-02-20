@@ -3,6 +3,7 @@ import './index.css';
 import App from './App.jsx';
 
 // 📌 개발 환경에서만 MSW 실행
+
 if (process.env.NODE_ENV === 'development') {
   const { startWorker } = await import('./mocks/browser');
   await startWorker();

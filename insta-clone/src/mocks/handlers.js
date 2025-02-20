@@ -221,4 +221,76 @@ export const handlers = [
     post.comments.push(newComment);
     return HttpResponse.json(newComment, { status: 201 });
   }),
+  // ✅ 프로필 이미지 업로드
+http.post('/api/profile/image', async ({ request }) => {
+  const loggedInUser = getSessionUser();
+  if (!loggedInUser) {
+    return HttpResponse.json(
+      { error: '로그인이 필요합니다.' },
+      { status: 401 }
+    );
+  }
+
+  try {
+    const { image } = await request.json();
+    
+    // 현재 로그인한 유저의 프로필 이미지 업데이트
+    const user = users.find(u => u.email === loggedInUser.email);
+    if (user) {
+      user.profile_image = image;
+      
+      // 세션 유저 정보도 업데이트
+      setSessionUser({
+        ...loggedInUser,
+        profile_image: image
+      });
+    }
+
+    return HttpResponse.json({ 
+      success: true,
+      message: '프로필 이미지가 업데이트되었습니다.',
+      image
+    });
+  } catch (error) {
+    return HttpResponse.json(
+      { error: '이미지 업로드 실패' },
+      { status: 500 }
+    );
+  }
+}),
+
+// ✅ 프로필 이미지 삭제
+http.delete('/api/profile/image', async () => {
+  const loggedInUser = getSessionUser();
+  if (!loggedInUser) {
+    return HttpResponse.json(
+      { error: '로그인이 필요합니다.' },
+      { status: 401 }
+    );
+  }
+
+  try {
+    // 현재 로그인한 유저의 프로필 이미지 삭제
+    const user = users.find(u => u.email === loggedInUser.email);
+    if (user) {
+      user.profile_image = null;
+      
+      // 세션 유저 정보도 업데이트
+      setSessionUser({
+        ...loggedInUser,
+        profile_image: null
+      });
+    }
+
+    return HttpResponse.json({ 
+      success: true,
+      message: '프로필 이미지가 삭제되었습니다.'
+    });
+  } catch (error) {
+    return HttpResponse.json(
+      { error: '이미지 삭제 실패' },
+      { status: 500 }
+    );
+  }
+}),
 ];

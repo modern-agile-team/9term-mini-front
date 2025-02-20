@@ -89,11 +89,11 @@ const CreatePostModal = ({ onClose }) => {
       onClick={handleCancel}
       className="absolute top-3 right-3"
       > 
-    <img 
+      <img 
       src="/assets/icons/cancel.svg" 
       className=" w-7 h-7 hover:opacity-60 transition-colors brightness-0 invert-[1]"  // invert 클래스 사용
      />
-</button>
+      </button>
       
       <div className="bg-white w-full max-w-[500px] rounded-xl h-[min(90vh,500px)] flex flex-col"
       onClick={(e) => e.stopPropagation()}>
