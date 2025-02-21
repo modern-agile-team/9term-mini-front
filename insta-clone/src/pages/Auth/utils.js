@@ -1,7 +1,7 @@
 import isValidEmail from '@/utils/isValidEmail';
 
-export default function validateAuth({ email, password }) {
-  if (!email || !password) {
+export default function validateAuth({ email, pwd }) {
+  if (!email || !pwd) {
     return {
       isValid: false,
       error: '이메일과 비밀번호를 모두 입력해주세요.',
@@ -15,7 +15,7 @@ export default function validateAuth({ email, password }) {
     };
   }
 
-  if (password.length < 6) {
+  if (pwd.length < 6) {
     return {
       isValid: false,
       error: '비밀번호는 최소 6자 이상이어야 합니다.',
