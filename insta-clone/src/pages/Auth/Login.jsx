@@ -2,24 +2,25 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import logoSvg from '/assets/icons/logo.svg';
 import validateAuth from './utils';
+import apiClient from '@/services/apiClient';
 
 const Login = () => {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [pwd, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate(); // ✅ 페이지 이동을 위한 useNavigate 추가
 
   useEffect(() => {
     setError('');
-  }, [email, password]);
+  }, [email, pwd]);
 
   // 폼 제출 처리 함수
   const handleSubmit = async e => {
     e.preventDefault();
 
     // 입력값 검증
-    const validation = validateAuth({ email, password });
+    const validation = validateAuth({ email, pwd });
     if (!validation.isValid) {
       setError(validation.error);
       return;
@@ -27,18 +28,18 @@ const Login = () => {
 
     setIsLoading(true); // 로딩 상태 활성화
     setError(''); // 기존 오류 초기화
+    console.log(`📧 이메일: ${email}, 🔑 비밀번호: ${pwd}`);
 
     try {
-      // ✅ MSW 로그인 API 요청
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, pwd }),
-      });
+      const data = await apiClient
+        .post('api/login', {
+          json: { email, pwd }, // ✅ ky는 `json` 옵션을 제공하여 자동으로 JSON 변환
+          throwHttpErrors: false, // ✅ HTTP 에러 발생 시 catch 블록에서 처리 가능
+        })
+        .json(); // ✅ 자동으로 `response.json()` 처리
 
-      const data = await response.json();
-
-      if (!response.ok) {
+      console.log('데이터', data);
+      if (data.error) {
         throw new Error(data.error || '로그인 실패: 다시 시도해주세요.');
       }
 
@@ -83,7 +84,7 @@ const Login = () => {
           {/* 비밀번호 입력 */}
           <input
             type="password"
-            value={password}
+            value={pwd}
             onChange={e => setPassword(e.target.value)}
             placeholder="비밀번호"
             className="w-[40%] px-2 py-[9px] bg-[#fafafa] text-sm border border-gray-300 rounded-sm
