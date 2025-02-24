@@ -1,25 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import logoSvg from '/assets/icons/logo.svg';
-import validateAuth from './utils';
+import validateAuth from '@/pages/Auth/utils';
+import apiClient from '@/services/apiClient';
 
 const Signup = () => {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [pwd, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     setError('');
-  }, [email, password]);
+  }, [email, pwd]);
 
   // 폼 제출 처리 함수
   const handleSubmit = async e => {
     e.preventDefault();
 
     // 입력값 검증
-    const validation = validateAuth({ email, password });
+    const validation = validateAuth({ email, pwd });
     if (!validation.isValid) {
       setError(validation.error);
       return;
@@ -29,16 +30,14 @@ const Signup = () => {
     setError(''); // 기존 오류 초기화
 
     try {
-      // ✅ MSW 회원가입 API 요청
-      const response = await fetch('/api/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, pwd }),
-      });
+      const data = await apiClient
+        .post('api/register', {
+          json: { email, pwd },
+          throwHttpErrors: false,
+        })
+        .json();
 
-      const data = await response.json();
-
-      if (!response.ok) {
+      if (data.error) {
         throw new Error(data.error || '회원가입 실패: 다시 시도해주세요.');
       }
 
@@ -83,7 +82,7 @@ const Signup = () => {
           {/* 비밀번호 입력 */}
           <input
             type="password"
-            value={password}
+            value={pwd}
             onChange={e => setPassword(e.target.value)}
             placeholder="비밀번호"
             className="w-[40%] px-2 py-[9px] bg-[#fafafa] text-sm border border-gray-300 rounded-sm
