@@ -3,10 +3,8 @@ import ky from 'ky';
 const apiClient = ky.create({
   prefixUrl: 'http://43.202.196.220:3000/', // ✅ 백엔드 API 주소
   headers: () => {
-    const token = localStorage.getItem('token'); // ✅ JWT 토큰 가져오기
     return {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}), // ✅ 토큰이 있을 경우 헤더 추가
     };
   },
   credentials: 'include', // ✅ withCredentials 대체 (쿠키 인증 사용 시)
