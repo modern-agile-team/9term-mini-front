@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import logoSvg from '/assets/icons/logo.svg';
-import validateAuth from './utils';
+import validateAuth from '../../utils/utils';
 import apiClient from '@/services/apiClient';
 
 const Login = () => {
