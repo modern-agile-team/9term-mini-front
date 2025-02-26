@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import CommentInput from '@/pages/Home/CommentInput';
 import CommentList from '@/pages/Home/CommentList';
-import useCurrentUser from '@/hooks/useCurrentUser';
+import useAuth from '@/hooks/useAuth';
 import useLike from '@/hooks/useLike';
 import useComments from '@/hooks/useComments';
 import apiClient from '@/services/apiClient';
@@ -9,25 +9,22 @@ import apiClient from '@/services/apiClient';
 const FeedCard = ({ id, user_id, post_img, content, likes = 0, onDelete }) => {
   const [postContent, setPostContent] = useState(content);
   const [showComments, setShowComments] = useState(false);
-  const currentUser = useCurrentUser();
-  // useLike 훅에 게시물 id와 초기 좋아요 개수를 넘겨서 ky를 이용한 요청 수행
+  const { user, isAuthenticated } = useAuth(); // ✅ useAuth에서 현재 로그인된 유저 가져오기
   const { likeCount, isLiked, toggleLike } = useLike(likes, id);
   const { commentList, addComment, deleteComment, loading } = useComments({
     postId: id,
-    currentUser,
+    currentUser: user,
   });
 
-  // 게시물 수정: ky를 사용하여 PATCH 요청
+  // 게시물 수정
   const handleEditPost = async () => {
     const newContent = prompt('게시글을 입력하세요:', postContent);
     if (!newContent) return;
 
     try {
-      const response = await apiClient
-        .patch(`posts/${id}`, {
-          json: { content: newContent },
-        })
-        .json();
+      await apiClient.patch(`api/posts/${id}`, {
+        json: { content: newContent },
+      });
 
       alert('게시물이 수정되었습니다.');
       setPostContent(newContent);
@@ -36,12 +33,12 @@ const FeedCard = ({ id, user_id, post_img, content, likes = 0, onDelete }) => {
     }
   };
 
-  // 게시물 삭제: ky를 사용하여 DELETE 요청
+  // 게시물 삭제
   const handleDeletePost = async () => {
     if (!window.confirm('정말로 이 게시물을 삭제하시겠습니까?')) return;
 
     try {
-      await apiClient.delete(`posts/${id}`);
+      await apiClient.delete(`api/posts/${id}`);
       alert('게시물이 삭제되었습니다.');
       onDelete(id);
     } catch (error) {
@@ -49,7 +46,7 @@ const FeedCard = ({ id, user_id, post_img, content, likes = 0, onDelete }) => {
     }
   };
 
-  if (currentUser === null) return <p>로딩 중...</p>;
+  if (!isAuthenticated) return null; // ✅ 인증되지 않은 사용자는 아무것도 렌더링하지 않음
 
   return (
     <div className="p-4 mb-4 bg-white w-full max-w-lg mx-auto">
@@ -63,7 +60,7 @@ const FeedCard = ({ id, user_id, post_img, content, likes = 0, onDelete }) => {
           />
           <span className="font-bold text-xs">{user_id}</span>
         </div>
-        {currentUser === user_id && (
+        {user?.id === user_id && (
           <div className="flex space-x-2">
             <button onClick={handleEditPost} className="text-blue-500 text-xs">
               수정
@@ -115,7 +112,7 @@ const FeedCard = ({ id, user_id, post_img, content, likes = 0, onDelete }) => {
             ) : (
               <CommentList
                 comments={commentList}
-                currentUser={currentUser}
+                currentUser={user}
                 onDeleteComment={deleteComment}
               />
             )}
