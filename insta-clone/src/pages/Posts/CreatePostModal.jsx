@@ -1,9 +1,10 @@
 import { useState, useRef } from 'react';
+import apiClient from '@/services/apiClient';
 
 const CreatePostModal = ({ onClose }) => {
   const [dragActive, setDragActive] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
-  const [caption, setCaption] = useState('');
+  const [content, setContent] = useState('');
   const inputRef = useRef(null);
 
   // 파일 처리 함수
@@ -41,16 +42,11 @@ const CreatePostModal = ({ onClose }) => {
     if (!selectedImage) return;
 
     try {
-      const response = await fetch('/api/posts', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          image: selectedImage,
-          caption,
-        }),
-      });
+      const response = await apiClient
+        .post('/api/posts', {
+          json: { post_img: selectedImage, content },
+        })
+        .json();
 
       if (!response.ok) {
         throw new Error('게시물 업로드 실패');
@@ -74,32 +70,31 @@ const CreatePostModal = ({ onClose }) => {
       if (
         window.confirm('작성 중인 내용이 삭제됩니다. 그래도 나가시겠습니까?')
       ) {
-        onClose();  
-      } 
-    }else {
         onClose();
       }
-    
+    } else {
+      onClose();
+    }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
-    onClick={handleCancel} >
-     <button
+    <div
+      className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
       onClick={handleCancel}
-      className="absolute top-3 right-3"
-      > 
-      <img 
-      src="/assets/icons/cancel.svg" 
-      className=" w-7 h-7 hover:opacity-60 transition-colors brightness-0 invert-[1]"  // invert 클래스 사용
-     />
+    >
+      <button onClick={handleCancel} className="absolute top-3 right-3">
+        <img
+          src="/assets/icons/cancel.svg"
+          className=" w-7 h-7 hover:opacity-60 transition-colors brightness-0 invert-[1]" // invert 클래스 사용
+        />
       </button>
-      
-      <div className="bg-white w-full max-w-[500px] rounded-xl h-[min(90vh,500px)] flex flex-col"
-      onClick={(e) => e.stopPropagation()}>
+
+      <div
+        className="bg-white w-full max-w-[500px] rounded-xl h-[min(90vh,500px)] flex flex-col"
+        onClick={e => e.stopPropagation()}
+      >
         {/* 헤더 */}
         <div className="relative flex items-center justify-center p-3 border-b border-gray-200">
-        
           <h2 className="text-base font-semibold">새 게시물 만들기</h2>
           {selectedImage && (
             <button
@@ -135,8 +130,8 @@ const CreatePostModal = ({ onClose }) => {
                 {/* 글쓰기 영역 */}
                 <div className=" w-full mt-2 ">
                   <textarea
-                    value={caption}
-                    onChange={e => setCaption(e.target.value)}
+                    value={content}
+                    onChange={e => setContent(e.target.value)}
                     placeholder="문구 입력..."
                     className="w-full h-25 resize-none
                     bg-[#fafafa]
@@ -146,7 +141,7 @@ const CreatePostModal = ({ onClose }) => {
                     maxLength={500}
                   />
                   <div className="flex justify-end items-center text-sm text-gray-500">
-                    <span>{caption.length}/500</span>
+                    <span>{content.length}/500</span>
                   </div>
                 </div>
               </>

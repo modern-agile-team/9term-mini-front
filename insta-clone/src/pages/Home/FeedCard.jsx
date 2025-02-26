@@ -4,51 +4,48 @@ import CommentList from '@/pages/Home/CommentList';
 import useCurrentUser from '@/hooks/useCurrentUser';
 import useLike from '@/hooks/useLike';
 import useComments from '@/hooks/useComments';
+import apiClient from '@/services/apiClient';
 
-const FeedCard = ({ id, username, image, caption, likes = 0, onDelete }) => {
-  const [postCaption, setPostCaption] = useState(caption); // ✅ caption 상태 추가
+const FeedCard = ({ id, user_id, post_img, content, likes = 0, onDelete }) => {
+  const [postContent, setPostContent] = useState(content);
   const [showComments, setShowComments] = useState(false);
   const currentUser = useCurrentUser();
-  const { likeCount, isLiked, toggleLike } = useLike(likes);
+  // useLike 훅에 게시물 id와 초기 좋아요 개수를 넘겨서 ky를 이용한 요청 수행
+  const { likeCount, isLiked, toggleLike } = useLike(likes, id);
   const { commentList, addComment, deleteComment, loading } = useComments({
     postId: id,
     currentUser,
   });
 
-  // ✅ 게시물 수정 핸들러 (새로고침 없이 UI 업데이트)
+  // 게시물 수정: ky를 사용하여 PATCH 요청
   const handleEditPost = async () => {
-    const newCaption = prompt('새로운 캡션을 입력하세요:', postCaption);
-    if (!newCaption) return;
+    const newContent = prompt('게시글을 입력하세요:', postContent);
+    if (!newContent) return;
 
     try {
-      const response = await fetch(`/api/posts/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ caption: newCaption }),
-      });
-
-      if (!response.ok) throw new Error('게시물 수정 실패');
+      const response = await apiClient
+        .patch(`posts/${id}`, {
+          json: { content: newContent },
+        })
+        .json();
 
       alert('게시물이 수정되었습니다.');
-      setPostCaption(newCaption); // ✅ 상태 업데이트로 UI 변경
+      setPostContent(newContent);
     } catch (error) {
-      console.error(error.message);
+      console.error('게시물 수정 실패:', error);
     }
   };
 
-  // ✅ 게시물 삭제 핸들러 (onDelete를 부모에서 받아 처리)
+  // 게시물 삭제: ky를 사용하여 DELETE 요청
   const handleDeletePost = async () => {
     if (!window.confirm('정말로 이 게시물을 삭제하시겠습니까?')) return;
 
     try {
-      const response = await fetch(`/api/posts/${id}`, { method: 'DELETE' });
-
-      if (!response.ok) throw new Error('게시물 삭제 실패');
-
+      await apiClient.delete(`posts/${id}`);
       alert('게시물이 삭제되었습니다.');
-      onDelete(id); // ✅ 부모 컴포넌트에서 상태 업데이트하여 UI에서 제거
+      onDelete(id);
     } catch (error) {
-      console.error(error.message);
+      console.error('게시물 삭제 실패:', error);
     }
   };
 
@@ -56,7 +53,7 @@ const FeedCard = ({ id, username, image, caption, likes = 0, onDelete }) => {
 
   return (
     <div className="p-4 mb-4 bg-white w-full max-w-lg mx-auto">
-      {/* 프로필 & 수정/삭제 버튼 */}
+      {/* 프로필 및 수정/삭제 버튼 */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center space-x-2">
           <img
@@ -64,9 +61,9 @@ const FeedCard = ({ id, username, image, caption, likes = 0, onDelete }) => {
             alt="Profile"
             className="w-8 h-8 rounded-full"
           />
-          <span className="font-bold text-xs">{username}</span>
+          <span className="font-bold text-xs">{user_id}</span>
         </div>
-        {currentUser === username && (
+        {currentUser === user_id && (
           <div className="flex space-x-2">
             <button onClick={handleEditPost} className="text-blue-500 text-xs">
               수정
@@ -79,7 +76,7 @@ const FeedCard = ({ id, username, image, caption, likes = 0, onDelete }) => {
       </div>
 
       {/* 게시물 이미지 */}
-      <img src={image} alt="Post" className="w-full rounded-xs" />
+      <img src={post_img} alt="Post" className="w-full rounded-xs" />
 
       {/* 게시물 정보 */}
       <div className="mt-2 px-2">
@@ -101,7 +98,7 @@ const FeedCard = ({ id, username, image, caption, likes = 0, onDelete }) => {
         </div>
         <p className="text-sm font-bold">좋아요 {likeCount}개</p>
         <p className="text-sm mt-1">
-          <span className="font-bold">{username}</span> {postCaption}
+          <span className="font-bold">{user_id}</span> {postContent}
         </p>
         <p
           className="text-xs text-gray-500 mt-1 cursor-pointer"
