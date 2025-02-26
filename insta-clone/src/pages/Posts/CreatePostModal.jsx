@@ -1,6 +1,5 @@
 import apiClient from '@/services/apiClient';
 import { useState, useRef } from 'react';
-import apiClient from '@/services/apiClient';
 
 const CreatePostModal = ({ onClose }) => {
   const [dragActive, setDragActive] = useState(false);
