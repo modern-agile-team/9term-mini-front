@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import apiClient from '@/services/apiClient'; // apiClient 사용
 import useProfileStore from '@/store/useProfileStore';
 
 const Profile = ({ onClose }) => {
@@ -19,14 +20,8 @@ const Profile = ({ onClose }) => {
 
   const handleImageUpload = async imageToUpload => {
     try {
-      const response = await fetch('/api/profile/image', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          image: imageToUpload,
-        }),
+      const response = await apiClient.patch('/api/users/me', {
+        json: { profileImage: imageToUpload }, // 프로필 이미지 수정
       });
 
       if (!response.ok) {
@@ -50,8 +45,8 @@ const Profile = ({ onClose }) => {
 
   const handleImageDelete = async () => {
     try {
-      const response = await fetch('/api/profile/image', {
-        method: 'DELETE',
+      const response = await apiClient.delete('/api/users/me', {
+        json: { profileImage: null }, // 프로필 이미지 삭제
       });
 
       if (!response.ok) {

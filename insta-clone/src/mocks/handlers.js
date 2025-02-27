@@ -4,7 +4,7 @@ let posts = [
   {
     id: 1,
     username: 'user1_1',
-    post_img:
+    postImg:
       'https://cdn.news.hidoc.co.kr/news/photo/202104/24409_58461_0826.jpg',
     content: '여행왔슈',
     likes: 10,
@@ -17,7 +17,7 @@ let posts = [
   {
     id: 2,
     username: 'user2',
-    post_img:
+    postImg:
       'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTmMPQb8IJeXeHn_Fxj8HN19mDbRKEFCmCjwQ&s',
     content: '냐옹이',
     likes: 5,
