@@ -44,7 +44,7 @@ const CreatePostModal = ({ onClose }) => {
     try {
       const response = await apiClient
         .post('/api/posts', {
-          json: { post_img: selectedImage, content },
+          json: { postImg: selectedImage, content },
         })
         .json();
 

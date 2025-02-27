@@ -100,16 +100,6 @@ const Login = () => {
           >
             {isLoading ? '로그인 중...' : '로그인'}
           </button>
-
-          {/* 비밀번호 찾기 */}
-          <div className="text-center mt-4">
-            <Link
-              to="/find-password"
-              className="text text-xs hover:text-[#4CB5F9]/90"
-            >
-              비밀번호를 잊으셨나요?
-            </Link>
-          </div>
         </form>
       </div>
 

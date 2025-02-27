@@ -6,7 +6,7 @@ import useLike from '@/hooks/useLike';
 import useComments from '@/hooks/useComments';
 import apiClient from '@/services/apiClient';
 
-const FeedCard = ({ id, user_id, post_img, content, likes = 0, onDelete }) => {
+const FeedCard = ({ id, userId, postImg, content, likes = 0, onDelete }) => {
   const [postContent, setPostContent] = useState(content);
   const [showComments, setShowComments] = useState(false);
   const { user, isAuthenticated } = useAuth(); // ✅ useAuth에서 현재 로그인된 유저 가져오기
@@ -58,9 +58,9 @@ const FeedCard = ({ id, user_id, post_img, content, likes = 0, onDelete }) => {
             alt="Profile"
             className="w-8 h-8 rounded-full"
           />
-          <span className="font-bold text-xs">{user_id}</span>
+          <span className="font-bold text-xs">{userId}</span>
         </div>
-        {user?.id === user_id && (
+        {user?.id === userId && (
           <div className="flex space-x-2">
             <button onClick={handleEditPost} className="text-blue-500 text-xs">
               수정
@@ -73,7 +73,7 @@ const FeedCard = ({ id, user_id, post_img, content, likes = 0, onDelete }) => {
       </div>
 
       {/* 게시물 이미지 */}
-      <img src={post_img} alt="Post" className="w-full rounded-xs" />
+      <img src={postImg} alt="Post" className="w-full rounded-xs" />
 
       {/* 게시물 정보 */}
       <div className="mt-2 px-2">
@@ -95,7 +95,7 @@ const FeedCard = ({ id, user_id, post_img, content, likes = 0, onDelete }) => {
         </div>
         <p className="text-sm font-bold">좋아요 {likeCount}개</p>
         <p className="text-sm mt-1">
-          <span className="font-bold">{user_id}</span> {postContent}
+          <span className="font-bold">{userId}</span> {postContent}
         </p>
         <p
           className="text-xs text-gray-500 mt-1 cursor-pointer"
