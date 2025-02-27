@@ -67,6 +67,7 @@ const FeedCard = ({ id, userId, postImg, content, likes = 0, onDelete }) => {
 
   return (
     <div className="p-4 mb-4 bg-white w-full max-w-lg mx-auto">
+      {/* 프로필 및 수정/삭제 버튼 */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center space-x-2">
           <img
@@ -88,8 +89,10 @@ const FeedCard = ({ id, userId, postImg, content, likes = 0, onDelete }) => {
         )}
       </div>
 
+      {/* 게시물 이미지 */}
       <img src={postImg} alt="Post" className="w-full rounded-xs" />
 
+      {/* 게시물 정보 */}
       <div className="mt-2 px-2">
         <div className="flex items-center space-x-4 mb-2">
           <img
@@ -118,6 +121,7 @@ const FeedCard = ({ id, userId, postImg, content, likes = 0, onDelete }) => {
           댓글 {commentList.length}개 모두보기
         </p>
 
+        {/* 댓글 리스트 & 입력창 */}
         {showComments && (
           <>
             {loading ? (
