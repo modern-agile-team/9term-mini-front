@@ -3,7 +3,7 @@ import apiClient from '@/services/apiClient';
 import { useNavigate } from 'react-router-dom';
 
 function useAuth() {
-  const [isAuthenticated, setIsAuthenticated] = useState(null); // 초기값 null (로딩 중)
+  const [isAuthenticated, setIsAuthenticated] = useState(null); // 로딩 상태로 null 설정
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
