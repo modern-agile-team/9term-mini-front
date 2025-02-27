@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import CommentInput from '@/pages/Home/CommentInput';
 import CommentList from '@/pages/Home/CommentList';
 import useAuth from '@/hooks/useAuth';
@@ -9,7 +9,7 @@ import apiClient from '@/services/apiClient';
 const FeedCard = ({ id, userId, postImg, content, likes = 0, onDelete }) => {
   const [postContent, setPostContent] = useState(content);
   const [showComments, setShowComments] = useState(false);
-  const { user, isAuthenticated } = useAuth(); // ✅ useAuth에서 현재 로그인된 유저 가져오기
+  const { user, isAuthenticated } = useAuth();
   const { likeCount, isLiked, toggleLike } = useLike(likes, id);
   const { commentList, addComment, deleteComment, loading } = useComments({
     postId: id,
@@ -46,11 +46,27 @@ const FeedCard = ({ id, userId, postImg, content, likes = 0, onDelete }) => {
     }
   };
 
-  if (!isAuthenticated) return null; // ✅ 인증되지 않은 사용자는 아무것도 렌더링하지 않음
+  const handleLikeToggle = async () => {
+    try {
+      await toggleLike(); // 좋아요 상태를 전환
+      const response = await apiClient.patch(`/api/posts/${id}/like`, {
+        // 서버에서 좋아요 상태 업데이트
+        json: { isLiked: !isLiked },
+      });
+      if (response.ok) {
+        alert('좋아요 상태가 업데이트되었습니다.');
+      } else {
+        alert('좋아요 상태 업데이트에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('좋아요 상태 업데이트 실패:', error);
+    }
+  };
+
+  if (!isAuthenticated) return null;
 
   return (
     <div className="p-4 mb-4 bg-white w-full max-w-lg mx-auto">
-      {/* 프로필 및 수정/삭제 버튼 */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center space-x-2">
           <img
@@ -72,10 +88,8 @@ const FeedCard = ({ id, userId, postImg, content, likes = 0, onDelete }) => {
         )}
       </div>
 
-      {/* 게시물 이미지 */}
       <img src={postImg} alt="Post" className="w-full rounded-xs" />
 
-      {/* 게시물 정보 */}
       <div className="mt-2 px-2">
         <div className="flex items-center space-x-4 mb-2">
           <img
@@ -84,7 +98,7 @@ const FeedCard = ({ id, userId, postImg, content, likes = 0, onDelete }) => {
             }
             alt="Like"
             className="w-6 h-6 cursor-pointer"
-            onClick={toggleLike}
+            onClick={handleLikeToggle} // 좋아요 상태 변경
           />
           <img
             src="/assets/icons/comments.svg"
@@ -104,7 +118,6 @@ const FeedCard = ({ id, userId, postImg, content, likes = 0, onDelete }) => {
           댓글 {commentList.length}개 모두보기
         </p>
 
-        {/* 댓글 리스트 & 입력창 */}
         {showComments && (
           <>
             {loading ? (

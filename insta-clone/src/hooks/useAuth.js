@@ -10,10 +10,12 @@ function useAuth() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const response = await apiClient.get('/api/users/me'); // ✅ MSW와 실제 API 모두 대응
+        const response = await apiClient.get('/api/users/me'); // 세션 인증 확인
+
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
+
         const data = await response.json();
         setUser(data);
         setIsAuthenticated(true);
@@ -21,7 +23,7 @@ function useAuth() {
         console.error('인증 확인 실패:', error);
         setIsAuthenticated(false);
         if (error.message.includes('401')) {
-          navigate('/login'); // ✅ 인증 실패 시 로그인 페이지로 이동
+          navigate('/login'); // 인증 실패 시 로그인 페이지로 이동
         }
       }
     };
@@ -31,13 +33,13 @@ function useAuth() {
 
   const logout = async () => {
     try {
-      const response = await apiClient.post('/api/logout'); // ✅ MSW와 실제 API 대응
+      const response = await apiClient.post('/api/logout'); // 로그아웃
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
       setUser(null);
       setIsAuthenticated(false);
-      navigate('/login'); // ✅ 로그아웃 후 로그인 페이지로 이동
+      navigate('/login');
     } catch (error) {
       console.error('로그아웃 실패:', error);
     }
