@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import apiClient from '@/services/apiClient'; // ky 인스턴스 가져오기
 
 const useFetchPosts = () => {
   const [posts, setPosts] = useState([]); // ✅ 피드 데이터
@@ -8,14 +9,14 @@ const useFetchPosts = () => {
   const observerRef = useRef(null);
   const observerInstance = useRef(null);
 
-  // 🔹 API에서 피드 데이터 불러오기
+  // 🔹 API에서 피드 데이터 불러오기 (ky 사용)
   const fetchPosts = async () => {
     if (loading || !hasMore) return;
     setLoading(true);
 
     try {
-      const response = await fetch(`/api/posts?page=${page}`);
-      const data = await response.json();
+      // apiClient를 사용하여 GET 요청 보내기
+      const data = await apiClient.get(`posts?page=${page}`).json();
 
       if (data.length === 0) {
         setHasMore(false);
@@ -61,7 +62,7 @@ const useFetchPosts = () => {
     return () => {
       if (observerInstance.current) observerInstance.current.disconnect();
     };
-  }, [posts, hasMore]);
+  }, [posts, hasMore, loading]);
 
   return { posts, observerRef, loading };
 };

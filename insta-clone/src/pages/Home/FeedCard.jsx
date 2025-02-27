@@ -1,62 +1,73 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import CommentInput from '@/pages/Home/CommentInput';
 import CommentList from '@/pages/Home/CommentList';
-import useCurrentUser from '@/hooks/useCurrentUser';
+import useAuth from '@/hooks/useAuth';
 import useLike from '@/hooks/useLike';
 import useComments from '@/hooks/useComments';
+import apiClient from '@/services/apiClient';
 
-const FeedCard = ({ id, username, image, caption, likes = 0, onDelete }) => {
-  const [postCaption, setPostCaption] = useState(caption); // ✅ caption 상태 추가
+const FeedCard = ({ id, userId, postImg, content, likes = 0, onDelete }) => {
+  const [postContent, setPostContent] = useState(content);
   const [showComments, setShowComments] = useState(false);
-  const currentUser = useCurrentUser();
-  const { likeCount, isLiked, toggleLike } = useLike(likes);
+  const { user, isAuthenticated } = useAuth();
+  const { likeCount, isLiked, toggleLike } = useLike(likes, id);
   const { commentList, addComment, deleteComment, loading } = useComments({
     postId: id,
-    currentUser,
+    currentUser: user,
   });
 
-  // ✅ 게시물 수정 핸들러 (새로고침 없이 UI 업데이트)
+  // 게시물 수정
   const handleEditPost = async () => {
-    const newCaption = prompt('새로운 캡션을 입력하세요:', postCaption);
-    if (!newCaption) return;
+    const newContent = prompt('게시글을 입력하세요:', postContent);
+    if (!newContent) return;
 
     try {
-      const response = await fetch(`/api/posts/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ caption: newCaption }),
+      await apiClient.patch(`api/posts/${id}`, {
+        json: { content: newContent },
       });
 
-      if (!response.ok) throw new Error('게시물 수정 실패');
-
       alert('게시물이 수정되었습니다.');
-      setPostCaption(newCaption); // ✅ 상태 업데이트로 UI 변경
+      setPostContent(newContent);
     } catch (error) {
-      console.error(error.message);
+      console.error('게시물 수정 실패:', error);
     }
   };
 
-  // ✅ 게시물 삭제 핸들러 (onDelete를 부모에서 받아 처리)
+  // 게시물 삭제
   const handleDeletePost = async () => {
     if (!window.confirm('정말로 이 게시물을 삭제하시겠습니까?')) return;
 
     try {
-      const response = await fetch(`/api/posts/${id}`, { method: 'DELETE' });
-
-      if (!response.ok) throw new Error('게시물 삭제 실패');
-
+      await apiClient.delete(`api/posts/${id}`);
       alert('게시물이 삭제되었습니다.');
-      onDelete(id); // ✅ 부모 컴포넌트에서 상태 업데이트하여 UI에서 제거
+      onDelete(id);
     } catch (error) {
-      console.error(error.message);
+      console.error('게시물 삭제 실패:', error);
     }
   };
 
-  if (currentUser === null) return <p>로딩 중...</p>;
+  const handleLikeToggle = async () => {
+    try {
+      await toggleLike(); // 좋아요 상태를 전환
+      const response = await apiClient.patch(`/api/posts/${id}/like`, {
+        // 서버에서 좋아요 상태 업데이트
+        json: { isLiked: !isLiked },
+      });
+      if (response.ok) {
+        alert('좋아요 상태가 업데이트되었습니다.');
+      } else {
+        alert('좋아요 상태 업데이트에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('좋아요 상태 업데이트 실패:', error);
+    }
+  };
+
+  if (!isAuthenticated) return null;
 
   return (
     <div className="p-4 mb-4 bg-white w-full max-w-lg mx-auto">
-      {/* 프로필 & 수정/삭제 버튼 */}
+      {/* 프로필 및 수정/삭제 버튼 */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center space-x-2">
           <img
@@ -64,9 +75,9 @@ const FeedCard = ({ id, username, image, caption, likes = 0, onDelete }) => {
             alt="Profile"
             className="w-8 h-8 rounded-full"
           />
-          <span className="font-bold text-xs">{username}</span>
+          <span className="font-bold text-xs">{userId}</span>
         </div>
-        {currentUser === username && (
+        {user?.id === userId && (
           <div className="flex space-x-2">
             <button onClick={handleEditPost} className="text-blue-500 text-xs">
               수정
@@ -79,7 +90,7 @@ const FeedCard = ({ id, username, image, caption, likes = 0, onDelete }) => {
       </div>
 
       {/* 게시물 이미지 */}
-      <img src={image} alt="Post" className="w-full rounded-xs" />
+      <img src={postImg} alt="Post" className="w-full rounded-xs" />
 
       {/* 게시물 정보 */}
       <div className="mt-2 px-2">
@@ -90,7 +101,7 @@ const FeedCard = ({ id, username, image, caption, likes = 0, onDelete }) => {
             }
             alt="Like"
             className="w-6 h-6 cursor-pointer"
-            onClick={toggleLike}
+            onClick={handleLikeToggle} // 좋아요 상태 변경
           />
           <img
             src="/assets/icons/comments.svg"
@@ -101,7 +112,7 @@ const FeedCard = ({ id, username, image, caption, likes = 0, onDelete }) => {
         </div>
         <p className="text-sm font-bold">좋아요 {likeCount}개</p>
         <p className="text-sm mt-1">
-          <span className="font-bold">{username}</span> {postCaption}
+          <span className="font-bold">{userId}</span> {postContent}
         </p>
         <p
           className="text-xs text-gray-500 mt-1 cursor-pointer"
@@ -118,7 +129,7 @@ const FeedCard = ({ id, username, image, caption, likes = 0, onDelete }) => {
             ) : (
               <CommentList
                 comments={commentList}
-                currentUser={currentUser}
+                currentUser={user}
                 onDeleteComment={deleteComment}
               />
             )}

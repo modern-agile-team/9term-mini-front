@@ -1,15 +1,24 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom'; // ✅ Link 추가
 import logoSvg from '/assets/icons/logo.svg';
 import validateAuth from '@/pages/Auth/utils';
 import apiClient from '@/services/apiClient';
+import useAuth from '@/hooks/useAuth'; // useAuth 훅 임포트
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [pwd, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate(); // ✅ 페이지 이동을 위한 useNavigate 추가
+  const { isAuthenticated, setUser } = useAuth(); // useAuth 훅 사용
+  const navigate = useNavigate(); // 페이지 이동을 위한 useNavigate 추가
+
+  // 만약 사용자가 이미 인증되어 있다면 자동으로 홈으로 리디렉션
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/'); // 로그인 성공 시 Home으로 이동
+    }
+  }, [isAuthenticated, navigate]);
 
   useEffect(() => {
     setError('');
@@ -44,6 +53,10 @@ const Login = () => {
       }
 
       console.log('✅ 로그인 성공:', data);
+
+      // 로그인 후, 인증된 사용자 정보 설정
+      setUser(data); // useAuth 훅을 통해 사용자 정보 설정
+
       navigate('/'); // ✅ 로그인 성공 시 Home으로 이동
     } catch (error) {
       setError(error.message);
@@ -100,16 +113,6 @@ const Login = () => {
           >
             {isLoading ? '로그인 중...' : '로그인'}
           </button>
-
-          {/* 비밀번호 찾기 */}
-          <div className="text-center mt-4">
-            <Link
-              to="/find-password"
-              className="text text-xs hover:text-[#4CB5F9]/90"
-            >
-              비밀번호를 잊으셨나요?
-            </Link>
-          </div>
         </form>
       </div>
 

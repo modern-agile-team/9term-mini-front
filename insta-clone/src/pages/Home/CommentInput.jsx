@@ -1,15 +1,19 @@
 import { useState, useRef } from 'react';
+import useComments from '@/hooks/useComments'; // useComments 훅 사용
 
-const CommentInput = ({ onAddComment }) => {
+const CommentInput = ({ postId }) => {
   const [newComment, setNewComment] = useState('');
   const isSubmitting = useRef(false);
   const isComposing = useRef(false); // 한글 입력 상태 체크
 
-  const handleAddComment = () => {
+  // useComments 훅에서 addComment를 가져옴
+  const { addComment } = useComments({ postId });
+
+  const handleAddComment = async () => {
     if (isSubmitting.current || newComment.trim() === '') return;
 
     isSubmitting.current = true;
-    onAddComment(newComment);
+    await addComment(newComment); // 댓글 추가
     setNewComment('');
 
     setTimeout(() => {
