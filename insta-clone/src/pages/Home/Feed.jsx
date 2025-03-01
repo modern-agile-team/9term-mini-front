@@ -2,12 +2,12 @@ import useFetchPosts from '@/hooks/useFetchPosts'; // 🔥 커스텀 훅 import
 import FeedList from '@/pages/Home/FeedList';
 
 const Feed = () => {
-  const { posts, observerRef, loading } = useFetchPosts();
+  const { posts, observerRef, isLoading } = useFetchPosts();
 
   return (
     <div className="feed-container">
       <FeedList posts={posts} observerRef={observerRef} />
-      {loading && <p>Loading...</p>}
+      {isLoading && <p>Loading...</p>}
     </div>
   );
 };

@@ -6,12 +6,20 @@ import useLike from '@/hooks/useLike';
 import useComments from '@/hooks/useComments';
 import apiClient from '@/services/apiClient';
 
-const FeedCard = ({ id, userId, postImg, content, likes = 0, onDelete }) => {
+const FeedCard = ({
+  id,
+  userId,
+  email,
+  postImg,
+  content,
+  likes = 0,
+  onDelete,
+}) => {
   const [postContent, setPostContent] = useState(content);
   const [showComments, setShowComments] = useState(false);
   const { user, isAuthenticated } = useAuth();
   const { likeCount, isLiked, toggleLike } = useLike(likes, id);
-  const { commentList, addComment, deleteComment, loading } = useComments({
+  const { commentList, addComment, deleteComment, isLoading } = useComments({
     postId: id,
     currentUser: user,
   });
@@ -48,9 +56,8 @@ const FeedCard = ({ id, userId, postImg, content, likes = 0, onDelete }) => {
 
   const handleLikeToggle = async () => {
     try {
-      await toggleLike(); // 좋아요 상태를 전환
+      await toggleLike();
       const response = await apiClient.patch(`/api/posts/${id}/like`, {
-        // 서버에서 좋아요 상태 업데이트
         json: { isLiked: !isLiked },
       });
       if (response.ok) {
@@ -75,7 +82,8 @@ const FeedCard = ({ id, userId, postImg, content, likes = 0, onDelete }) => {
             alt="Profile"
             className="w-8 h-8 rounded-full"
           />
-          <span className="font-bold text-xs">{userId}</span>
+          <span className="font-bold text-xs">{email}</span>{' '}
+          {/* 🔥 변경된 부분 */}
         </div>
         {user?.id === userId && (
           <div className="flex space-x-2">
@@ -101,7 +109,7 @@ const FeedCard = ({ id, userId, postImg, content, likes = 0, onDelete }) => {
             }
             alt="Like"
             className="w-6 h-6 cursor-pointer"
-            onClick={handleLikeToggle} // 좋아요 상태 변경
+            onClick={handleLikeToggle}
           />
           <img
             src="/assets/icons/comments.svg"
@@ -112,7 +120,8 @@ const FeedCard = ({ id, userId, postImg, content, likes = 0, onDelete }) => {
         </div>
         <p className="text-sm font-bold">좋아요 {likeCount}개</p>
         <p className="text-sm mt-1">
-          <span className="font-bold">{userId}</span> {postContent}
+          <span className="font-bold">{email}</span> {postContent}{' '}
+          {/* 🔥 변경된 부분 */}
         </p>
         <p
           className="text-xs text-gray-500 mt-1 cursor-pointer"
@@ -124,16 +133,16 @@ const FeedCard = ({ id, userId, postImg, content, likes = 0, onDelete }) => {
         {/* 댓글 리스트 & 입력창 */}
         {showComments && (
           <>
-            {loading ? (
+            {isLoading ? (
               <p>댓글 불러오는 중...</p>
             ) : (
               <CommentList
-                comments={commentList}
+                postId={id}
                 currentUser={user}
                 onDeleteComment={deleteComment}
               />
             )}
-            <CommentInput onAddComment={addComment} />
+            <CommentInput postId={id} />
           </>
         )}
       </div>

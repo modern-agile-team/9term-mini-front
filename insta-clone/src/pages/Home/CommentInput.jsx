@@ -2,38 +2,24 @@ import { useState, useRef } from 'react';
 import useComments from '@/hooks/useComments'; // useComments 훅 사용
 
 const CommentInput = ({ postId }) => {
+  console.log(`📢 [CommentInput] 받은 postId: ${postId}`); // ✅ postId 확인 로그
+
   const [newComment, setNewComment] = useState('');
   const isSubmitting = useRef(false);
-  const isComposing = useRef(false); // 한글 입력 상태 체크
+  const isComposing = useRef(false);
 
-  // useComments 훅에서 addComment를 가져옴
   const { addComment } = useComments({ postId });
 
   const handleAddComment = async () => {
     if (isSubmitting.current || newComment.trim() === '') return;
 
     isSubmitting.current = true;
-    await addComment(newComment); // 댓글 추가
+    await addComment(newComment);
     setNewComment('');
 
     setTimeout(() => {
       isSubmitting.current = false;
     }, 100);
-  };
-
-  const handleKeyDown = e => {
-    if (e.key === 'Enter' && !e.shiftKey && !isComposing.current) {
-      e.preventDefault();
-      handleAddComment();
-    }
-  };
-
-  const handleCompositionStart = () => {
-    isComposing.current = true;
-  };
-
-  const handleCompositionEnd = () => {
-    isComposing.current = false;
   };
 
   return (
@@ -43,9 +29,6 @@ const CommentInput = ({ postId }) => {
         placeholder="댓글 달기..."
         value={newComment}
         onChange={e => setNewComment(e.target.value)}
-        onKeyDown={handleKeyDown}
-        onCompositionStart={handleCompositionStart}
-        onCompositionEnd={handleCompositionEnd}
         className="w-full text-sm focus:outline-none p-1"
       />
       <button
