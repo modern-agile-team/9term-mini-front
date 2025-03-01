@@ -31,8 +31,8 @@ let posts = [
     likedBy: [],
     createdAt: new Date().toISOString(),
     comments: [
-      { id: 1, username: 'user2', text: '멋진 사진이네요!' },
-      { id: 2, username: 'user3', text: '어디로 여행 가셨나요?' },
+      { id: 1, email: 'user3@a.com', text: '멋진 사진이네요!' },
+      { id: 2, email: 'user5@a.com', text: '어디로 여행 가셨나요?' },
     ],
   },
   {
@@ -46,8 +46,8 @@ let posts = [
     likedBy: [],
     createdAt: new Date().toISOString(),
     comments: [
-      { id: 3, username: 'hee_min', text: '귀엽군', likes: 3 },
-      { id: 4, username: 'user4', text: '이름이 뭐야옹?', likes: 0 },
+      { id: 1, email: 'user6@a.com', text: '귀엽군' },
+      { id: 2, email: 'user4@a.com', text: '이름이 뭐야옹?' },
     ],
   },
 ];

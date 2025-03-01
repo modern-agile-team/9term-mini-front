@@ -12,7 +12,7 @@ const CommentList = ({ postId, currentUser }) => {
         commentList.map(comment => (
           <div key={comment.id} className="flex justify-between items-center">
             <p className="text-sm">
-              <span className="font-bold">{comment.username}</span>&nbsp;
+              <span className="font-bold">{comment.email}</span>&nbsp;
               {comment.text}
             </p>
             {currentUser === comment.username && (
