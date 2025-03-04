@@ -5,7 +5,7 @@ let users = [
     id: 1,
     username: 'hee_min',
     email: 'af@naver.com',
-    password: '1q2w3e4r',
+    pwd: '1q2w3e4r',
     profileImg:
       'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS7LpapIl8DITfz4_Y2z7pqs7FknPkjReAZCg&s',
   },
@@ -13,7 +13,7 @@ let users = [
     id: 2,
     username: 'user2',
     email: 'user2@example.com',
-    password: 'password123',
+    pwd: 'password123',
     profileImg:
       'https://cdn.pixabay.com/photo/2024/02/26/19/39/monochrome-image-8598798_1280.jpg',
   },
@@ -50,8 +50,8 @@ const registerHandler = http.post('/api/register', async ({ request }) => {
 
 // ✅ 로그인
 const loginHandler = http.post('/api/login', async ({ request }) => {
-  const { email, password } = await request.json();
-  const user = users.find(u => u.email === email && u.password === password);
+  const { email, pwd } = await request.json();
+  const user = users.find(u => u.email === email && u.pwd === pwd);
 
   if (!user) {
     return HttpResponse.json(
