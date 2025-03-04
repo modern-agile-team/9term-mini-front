@@ -137,7 +137,8 @@ const FeedCard = ({
       {isEditMode && (
         <CreatePostModal
           onClose={() => setIsEditMode(false)}
-          post={{ id, postImg, content: postContent }} // 기존 게시물 데이터 전달
+          postId={id} // ✅ postId 전달
+          initialData={{ postImg, content: postContent }} // ✅ 기존 데이터 전달
         />
       )}
     </div>

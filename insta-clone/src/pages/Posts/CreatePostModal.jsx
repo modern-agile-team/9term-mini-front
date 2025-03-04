@@ -1,11 +1,29 @@
+import { useState, useRef, useEffect } from 'react';
 import apiClient from '@/services/apiClient';
-import { useState, useRef } from 'react';
 
-const CreatePostModal = ({ onClose }) => {
+const CreatePostModal = ({ onClose, postId, initialData = {} }) => {
   const [dragActive, setDragActive] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [content, setContent] = useState('');
+  const [selectedImage, setSelectedImage] = useState(initialData.postImg || null);
+  const [caption, setCaption] = useState(initialData.content || '');
   const inputRef = useRef(null);
+
+  // postId가 있을 경우 기존 게시물 불러오기
+  useEffect(() => {
+    if (postId) {
+      const fetchPost = async () => {
+        try {
+          const response = await apiClient.get(`/api/posts/${postId}`).json();
+          if (!response) throw new Error('게시물을 불러올 수 없습니다.');
+
+          setSelectedImage(response.postImg);
+          setCaption(response.content);
+        } catch (error) {
+          console.error('게시물 불러오기 오류:', error);
+        }
+      };
+      fetchPost();
+    }
+  }, [postId]);
 
   // 파일 처리 함수
   const handleFile = file => {
@@ -32,126 +50,149 @@ const CreatePostModal = ({ onClose }) => {
   const handleDrop = e => {
     e.preventDefault();
     setDragActive(false);
+
     const file = e.dataTransfer.files[0];
     handleFile(file);
   };
 
-  // ✅ API: 게시물 등록
+  // 새 게시물 업로드 또는 수정
   const handleUpload = async () => {
     if (!selectedImage) return;
 
     try {
-      const response = await apiClient
-        .post('/api/posts', {
-          json: { postImg: selectedImage, content },
-        })
-        .json();
+      let response;
+      if (postId) {
+        response = await apiClient
+          .put(`/api/posts/${postId}`, {
+            json: { postImg: selectedImage, content: caption },
+          })
+          .json();
+      } else {
+        response = await apiClient
+          .post('/api/posts', {
+            json: { postImg: selectedImage, content: caption },
+          })
+          .json();
+      }
 
-      if (!response.ok) throw new Error('게시물 업로드 실패');
+      if (!response.ok) throw new Error('업로드 실패');
 
-      alert('게시물이 업로드되었습니다.');
-      onClose(); // ✅ 업로드 후 모달 닫기
+      alert(postId ? '게시물이 수정되었습니다.' : '게시물이 업로드되었습니다.');
+      onClose();
     } catch (error) {
-      console.error(error.message);
+      console.error('게시물 저장 오류:', error);
     }
   };
 
-  // ✅ 취소 버튼 핸들러
+  // 취소 버튼 핸들러
   const handleCancel = () => {
-    if (selectedImage || content) {
+    if (selectedImage) {
       if (
         window.confirm('작성 중인 내용이 삭제됩니다. 그래도 나가시겠습니까?')
       ) {
-        onClose();
-      }
+        onClose();  
+      } 
     } else {
-      onClose();
+        onClose();
     }
   };
 
   return (
-    <div
-      className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
-      onClick={handleCancel}
-    >
-      <div
-        className="bg-white w-full max-w-[500px] rounded-xl flex flex-col overflow-hidden"
-        onClick={e => e.stopPropagation()}
-      >
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
+      onClick={handleCancel}>
+      <button
+        onClick={handleCancel}
+        className="absolute top-3 right-3"
+      > 
+        <img 
+          src="/assets/icons/cancel.svg" 
+          className="w-7 h-7 hover:opacity-60 transition-colors brightness-0 invert-[1]"
+        />
+      </button>
+      
+      <div className="bg-white w-full max-w-[500px] rounded-xl h-[min(90vh,500px)] flex flex-col"
+        onClick={(e) => e.stopPropagation()}>
         {/* 헤더 */}
-        <div className="relative flex items-center justify-between p-3 border-b border-gray-200">
-          <button
-            onClick={handleCancel}
-            className="text-sm text-gray-500 hover:text-black"
-          >
-            취소
-          </button>
-          <h2 className="text-base font-semibold">새 게시물 만들기</h2>
+        <div className="relative flex items-center justify-center p-3 border-b border-gray-200">
+          <h2 className="text-base font-semibold">
+            {postId ? '게시물 수정' : '새 게시물 만들기'}
+          </h2>
           {selectedImage && (
             <button
               onClick={handleUpload}
-              className="text-sm font-medium text-[#0095F6] hover:text-[#1877F2] transition-colors"
+              className="absolute right-3 text-sm font-medium text-[#0095F6] hover:text-[#1877F2] cursor-pointer transition-colors"
             >
-              공유하기
+              {postId ? '수정하기' : '공유하기'}
             </button>
           )}
         </div>
 
         {/* 컨텐츠 영역 */}
         <div
-          className={`flex flex-col items-center justify-center flex-1 bg-white px-6 py-10 ${
-            dragActive ? 'bg-gray-100' : ''
+          className={`overflow-y-auto flex flex-col items-center pt-10 ${
+            dragActive ? 'bg-gray-100' : 'bg-white'
           }`}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
         >
-          {selectedImage ? (
-            <>
-              {/* 이미지 미리보기 */}
-              <div className="w-full h-[300px] bg-black flex items-center justify-center">
-                <img
-                  src={selectedImage}
-                  alt="Preview"
-                  className="max-w-full max-h-full object-contain"
+          <div
+            className={`flex ${selectedImage ? 'flex-col' : ''} transition-colors duration-200`}
+          >
+            {selectedImage ? (
+              <>
+                <div className="w-full h-[250px] bg-black flex items-center justify-center">
+                  <img
+                    src={selectedImage}
+                    alt="Preview"
+                    className="max-w-full max-h-full object-contain"
+                  />
+                </div>
+                {/* 글쓰기 영역 */}
+                <div className="w-full mt-2">
+                  <textarea
+                    value={caption}
+                    onChange={e => setCaption(e.target.value)}
+                    placeholder="문구 입력..."
+                    className="w-full h-25 resize-none
+                    bg-[#fafafa]
+                    border border-gray-300 rounded-sm focus:outline-none
+                    focus:border-gray-400
+                    placeholder:text-sm"
+                    maxLength={500}
+                  />
+                  <div className="flex justify-end items-center text-sm text-gray-500">
+                    <span>{caption.length}/500</span>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="text-center flex-col justify-center items-center px-4 py-20">
+                <div className="mx-auto mb-6 flex flex-col justify-center items-center">
+                  <img src="/assets/icons/photo.svg" />
+                </div>
+                <h3 className="text-lg mb-4">
+                  {dragActive
+                    ? '사진을 놓아주세요!'
+                    : '사진을 여기에 끌어다 놓으세요'}
+                </h3>
+                <input
+                  ref={inputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={e => handleFile(e.target.files[0])}
+                  className="hidden"
+                  id="fileInput"
                 />
+                <label
+                  htmlFor="fileInput"
+                  className="inline-block bg-[#0095F6] text-white px-4 py-2 rounded-lg text-sm font-medium cursor-pointer hover:bg-[#1877F2] transition-colors duration-200"
+                >
+                  컴퓨터에서 선택
+                </label>
               </div>
-              {/* 글쓰기 영역 */}
-              <textarea
-                value={content}
-                onChange={e => setContent(e.target.value)}
-                placeholder="문구 입력..."
-                className="w-full mt-4 p-2 bg-[#fafafa] border border-gray-300 rounded-md focus:outline-none focus:border-gray-400 text-sm"
-                maxLength={500}
-              />
-              <div className="w-full flex justify-end text-sm text-gray-500">
-                <span>{content.length}/500</span>
-              </div>
-            </>
-          ) : (
-            <div className="text-center flex flex-col justify-center items-center">
-              <img src="/assets/icons/photo.svg" className="mb-4" />
-              <p className="text-sm text-gray-600 mb-4">
-                {dragActive
-                  ? '사진을 놓아주세요!'
-                  : '사진을 여기에 끌어다 놓으세요'}
-              </p>
-              <input
-                ref={inputRef}
-                type="file"
-                accept="image/*"
-                onChange={e => handleFile(e.target.files[0])}
-                className="hidden"
-                id="fileInput"
-              />
-              <label
-                htmlFor="fileInput"
-                className="bg-[#0095F6] text-white px-4 py-2 rounded-lg text-sm font-medium cursor-pointer hover:bg-[#1877F2] transition-colors"
-              >
-                컴퓨터에서 선택
-              </label>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>
