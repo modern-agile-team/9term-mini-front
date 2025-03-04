@@ -13,7 +13,6 @@ const apiClient = ky.create({
       async (_request, _options, response) => {
         if (response.status === 401) {
           console.error('인증 오류: 로그인 필요');
-          window.location.href = '/login'; // 🚀 401 발생 시 자동 로그인 페이지 이동
         }
       },
     ],

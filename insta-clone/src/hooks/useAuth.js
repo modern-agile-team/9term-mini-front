@@ -1,17 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import apiClient from '@/services/apiClient';
 import { useNavigate } from 'react-router-dom';
 
 function useAuth() {
-  const [isAuthenticated, setIsAuthenticated] = useState(null); // 로딩 상태로 null 설정
+  const [isAuthenticated, setIsAuthenticated] = useState(null);
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
+  const checkedAuth = useRef(false);
 
   useEffect(() => {
     const checkAuth = async () => {
-      try {
-        const response = await apiClient.get('/api/users/me'); // 세션 인증 확인
+      if (checkedAuth.current) return;
+      checkedAuth.current = true;
 
+      try {
+        const response = await apiClient.get('/api/users/me');
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
@@ -22,18 +25,21 @@ function useAuth() {
       } catch (error) {
         console.error('인증 확인 실패:', error);
         setIsAuthenticated(false);
-        if (error.message.includes('401')) {
-          navigate('/login'); // 인증 실패 시 로그인 페이지로 이동
-        }
       }
     };
 
     checkAuth();
-  }, [navigate]);
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated === false) {
+      navigate('/login');
+    }
+  }, [isAuthenticated, navigate]);
 
   const logout = async () => {
     try {
-      const response = await apiClient.post('/api/logout'); // 로그아웃
+      const response = await apiClient.post('/api/logout');
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
@@ -45,7 +51,7 @@ function useAuth() {
     }
   };
 
-  return { isAuthenticated, user, logout };
+  return { isAuthenticated, user, setUser, logout }; // ✅ setUser 추가
 }
 
 export default useAuth;
