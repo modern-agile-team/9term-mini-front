@@ -5,35 +5,35 @@ import useAuth from '@/hooks/useAuth';
 import useLike from '@/hooks/useLike';
 import useComments from '@/hooks/useComments';
 import apiClient from '@/services/apiClient';
+import CreatePostModal from '@/pages/Posts/CreatePostModal';
 
-const FeedCard = ({ id, userId, postImg, content, likes = 0, onDelete }) => {
+const FeedCard = ({
+  id,
+  userId,
+  email,
+  postImg,
+  content,
+  likes = 0,
+  onDelete,
+}) => {
   const [postContent, setPostContent] = useState(content);
   const [showComments, setShowComments] = useState(false);
   const { user, isAuthenticated } = useAuth();
   const { likeCount, isLiked, toggleLike } = useLike(likes, id);
-  const { commentList, addComment, deleteComment, loading } = useComments({
+  const { commentList, addComment, deleteComment, isLoading } = useComments({
     postId: id,
     currentUser: user,
   });
 
-  // 게시물 수정
-  const handleEditPost = async () => {
-    const newContent = prompt('게시글을 입력하세요:', postContent);
-    if (!newContent) return;
+  // ✅ 수정 모드 상태 추가
+  const [isEditMode, setIsEditMode] = useState(false);
 
-    try {
-      await apiClient.patch(`api/posts/${id}`, {
-        json: { content: newContent },
-      });
-
-      alert('게시물이 수정되었습니다.');
-      setPostContent(newContent);
-    } catch (error) {
-      console.error('게시물 수정 실패:', error);
-    }
+  // ✅ 게시물 수정 (모달 열기)
+  const handleEditPost = () => {
+    setIsEditMode(true); // 수정 모드 활성화
   };
 
-  // 게시물 삭제
+  // ✅ 게시물 삭제
   const handleDeletePost = async () => {
     if (!window.confirm('정말로 이 게시물을 삭제하시겠습니까?')) return;
 
@@ -46,18 +46,13 @@ const FeedCard = ({ id, userId, postImg, content, likes = 0, onDelete }) => {
     }
   };
 
+  // ✅ 좋아요 토글
   const handleLikeToggle = async () => {
     try {
-      await toggleLike(); // 좋아요 상태를 전환
-      const response = await apiClient.patch(`/api/posts/${id}/like`, {
-        // 서버에서 좋아요 상태 업데이트
+      await toggleLike();
+      await apiClient.patch(`/api/posts/${id}/like`, {
         json: { isLiked: !isLiked },
       });
-      if (response.ok) {
-        alert('좋아요 상태가 업데이트되었습니다.');
-      } else {
-        alert('좋아요 상태 업데이트에 실패했습니다.');
-      }
     } catch (error) {
       console.error('좋아요 상태 업데이트 실패:', error);
     }
@@ -75,7 +70,7 @@ const FeedCard = ({ id, userId, postImg, content, likes = 0, onDelete }) => {
             alt="Profile"
             className="w-8 h-8 rounded-full"
           />
-          <span className="font-bold text-xs">{userId}</span>
+          <span className="font-bold text-xs">{email}</span>
         </div>
         {user?.id === userId && (
           <div className="flex space-x-2">
@@ -101,7 +96,7 @@ const FeedCard = ({ id, userId, postImg, content, likes = 0, onDelete }) => {
             }
             alt="Like"
             className="w-6 h-6 cursor-pointer"
-            onClick={handleLikeToggle} // 좋아요 상태 변경
+            onClick={handleLikeToggle}
           />
           <img
             src="/assets/icons/comments.svg"
@@ -112,7 +107,7 @@ const FeedCard = ({ id, userId, postImg, content, likes = 0, onDelete }) => {
         </div>
         <p className="text-sm font-bold">좋아요 {likeCount}개</p>
         <p className="text-sm mt-1">
-          <span className="font-bold">{userId}</span> {postContent}
+          <span className="font-bold">{email}</span> {postContent}
         </p>
         <p
           className="text-xs text-gray-500 mt-1 cursor-pointer"
@@ -124,19 +119,27 @@ const FeedCard = ({ id, userId, postImg, content, likes = 0, onDelete }) => {
         {/* 댓글 리스트 & 입력창 */}
         {showComments && (
           <>
-            {loading ? (
+            {isLoading ? (
               <p>댓글 불러오는 중...</p>
             ) : (
               <CommentList
-                comments={commentList}
+                postId={id}
                 currentUser={user}
                 onDeleteComment={deleteComment}
               />
             )}
-            <CommentInput onAddComment={addComment} />
+            <CommentInput postId={id} />
           </>
         )}
       </div>
+
+      {/* ✅ 게시물 수정 모달 */}
+      {isEditMode && (
+        <CreatePostModal
+          onClose={() => setIsEditMode(false)}
+          post={{ id, postImg, content: postContent }} // 기존 게시물 데이터 전달
+        />
+      )}
     </div>
   );
 };

@@ -32,12 +32,11 @@ const CreatePostModal = ({ onClose }) => {
   const handleDrop = e => {
     e.preventDefault();
     setDragActive(false);
-
     const file = e.dataTransfer.files[0];
     handleFile(file);
   };
 
-  // API: 게시물 등록
+  // ✅ API: 게시물 등록
   const handleUpload = async () => {
     if (!selectedImage) return;
 
@@ -48,25 +47,18 @@ const CreatePostModal = ({ onClose }) => {
         })
         .json();
 
-      if (!response.ok) {
-        throw new Error('게시물 업로드 실패');
-      }
+      if (!response.ok) throw new Error('게시물 업로드 실패');
 
-      const newPost = await response.json();
-      console.log('✅ 게시물 업로드 성공:', newPost);
-
-      // ✅ 업로드 성공 알림창 추가
       alert('게시물이 업로드되었습니다.');
-
-      onClose(); // 업로드 후 모달 닫기
+      onClose(); // ✅ 업로드 후 모달 닫기
     } catch (error) {
       console.error(error.message);
     }
   };
 
-  // 취소 버튼 핸들러
+  // ✅ 취소 버튼 핸들러
   const handleCancel = () => {
-    if (selectedImage) {
+    if (selectedImage || content) {
       if (
         window.confirm('작성 중인 내용이 삭제됩니다. 그래도 나가시겠습니까?')
       ) {
@@ -82,24 +74,23 @@ const CreatePostModal = ({ onClose }) => {
       className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
       onClick={handleCancel}
     >
-      <button onClick={handleCancel} className="absolute top-3 right-3">
-        <img
-          src="/assets/icons/cancel.svg"
-          className=" w-7 h-7 hover:opacity-60 transition-colors brightness-0 invert-[1]" // invert 클래스 사용
-        />
-      </button>
-
       <div
-        className="bg-white w-full max-w-[500px] rounded-xl h-[min(90vh,500px)] flex flex-col"
+        className="bg-white w-full max-w-[500px] rounded-xl flex flex-col overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
         {/* 헤더 */}
-        <div className="relative flex items-center justify-center p-3 border-b border-gray-200">
+        <div className="relative flex items-center justify-between p-3 border-b border-gray-200">
+          <button
+            onClick={handleCancel}
+            className="text-sm text-gray-500 hover:text-black"
+          >
+            취소
+          </button>
           <h2 className="text-base font-semibold">새 게시물 만들기</h2>
           {selectedImage && (
             <button
               onClick={handleUpload}
-              className="absolute right-3 text-sm font-medium text-[#0095F6] hover:text-[#1877F2] cursor-pointer transition-colors"
+              className="text-sm font-medium text-[#0095F6] hover:text-[#1877F2] transition-colors"
             >
               공유하기
             </button>
@@ -108,70 +99,59 @@ const CreatePostModal = ({ onClose }) => {
 
         {/* 컨텐츠 영역 */}
         <div
-          className={`overflow-y-auto flex flex-col items-center pt-10 ${
-            dragActive ? 'bg-gray-100' : 'bg-white'
+          className={`flex flex-col items-center justify-center flex-1 bg-white px-6 py-10 ${
+            dragActive ? 'bg-gray-100' : ''
           }`}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
         >
-          <div
-            className={`flex ${selectedImage ? 'flex-col' : ''} transition-colors duration-200`}
-          >
-            {selectedImage ? (
-              <>
-                <div className="w-full h-[250px] bg-black flex items-center justify-center">
-                  <img
-                    src={selectedImage}
-                    alt="Preview"
-                    className="max-w-full max-h-full object-contain"
-                  />
-                </div>
-                {/* 글쓰기 영역 */}
-                <div className=" w-full mt-2 ">
-                  <textarea
-                    value={content}
-                    onChange={e => setContent(e.target.value)}
-                    placeholder="문구 입력..."
-                    className="w-full h-25 resize-none
-                    bg-[#fafafa]
-                    border border-gray-300 rounded-sm focus:outline-none
-                    focus:border-gray-400
-                    placeholder:text-sm"
-                    maxLength={500}
-                  />
-                  <div className="flex justify-end items-center text-sm text-gray-500">
-                    <span>{content.length}/500</span>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <div className="text-center flex-col justify-center items-center px-4 py-20">
-                <div className="mx-auto mb-6 flex flex-col justify-center items-center">
-                  <img src="/assets/icons/photo.svg" />
-                </div>
-                <h3 className="text-lg mb-4">
-                  {dragActive
-                    ? '사진을 놓아주세요!'
-                    : '사진을 여기에 끌어다 놓으세요'}
-                </h3>
-                <input
-                  ref={inputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={e => handleFile(e.target.files[0])}
-                  className="hidden"
-                  id="fileInput"
+          {selectedImage ? (
+            <>
+              {/* 이미지 미리보기 */}
+              <div className="w-full h-[300px] bg-black flex items-center justify-center">
+                <img
+                  src={selectedImage}
+                  alt="Preview"
+                  className="max-w-full max-h-full object-contain"
                 />
-                <label
-                  htmlFor="fileInput"
-                  className="inline-block bg-[#0095F6] text-white px-4 py-2 rounded-lg text-sm font-medium cursor-pointer hover:bg-[#1877F2] transition-colors duration-200"
-                >
-                  컴퓨터에서 선택
-                </label>
               </div>
-            )}
-          </div>
+              {/* 글쓰기 영역 */}
+              <textarea
+                value={content}
+                onChange={e => setContent(e.target.value)}
+                placeholder="문구 입력..."
+                className="w-full mt-4 p-2 bg-[#fafafa] border border-gray-300 rounded-md focus:outline-none focus:border-gray-400 text-sm"
+                maxLength={500}
+              />
+              <div className="w-full flex justify-end text-sm text-gray-500">
+                <span>{content.length}/500</span>
+              </div>
+            </>
+          ) : (
+            <div className="text-center flex flex-col justify-center items-center">
+              <img src="/assets/icons/photo.svg" className="mb-4" />
+              <p className="text-sm text-gray-600 mb-4">
+                {dragActive
+                  ? '사진을 놓아주세요!'
+                  : '사진을 여기에 끌어다 놓으세요'}
+              </p>
+              <input
+                ref={inputRef}
+                type="file"
+                accept="image/*"
+                onChange={e => handleFile(e.target.files[0])}
+                className="hidden"
+                id="fileInput"
+              />
+              <label
+                htmlFor="fileInput"
+                className="bg-[#0095F6] text-white px-4 py-2 rounded-lg text-sm font-medium cursor-pointer hover:bg-[#1877F2] transition-colors"
+              >
+                컴퓨터에서 선택
+              </label>
+            </div>
+          )}
         </div>
       </div>
     </div>

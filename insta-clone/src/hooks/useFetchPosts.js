@@ -4,41 +4,37 @@ import apiClient from '@/services/apiClient'; // ky 인스턴스 가져오기
 const useFetchPosts = () => {
   const [posts, setPosts] = useState([]); // ✅ 피드 데이터
   const [page, setPage] = useState(1); // 🔹 페이지 번호 추가
-  const [loading, setLoading] = useState(false); // 🔹 중복 호출 방지
+  const [isLoading, setLoading] = useState(false); // 🔹 중복 호출 방지
   const [hasMore, setHasMore] = useState(true); // 🔹 더 이상 불러올 데이터 없을 때 중지
   const observerRef = useRef(null);
   const observerInstance = useRef(null);
 
   // 🔹 API에서 피드 데이터 불러오기 (ky 사용)
-  const fetchPosts = async () => {
-    if (loading || !hasMore) return;
-    setLoading(true);
-
+  const fetchPosts = async (page = 1) => {
     try {
-      // apiClient를 사용하여 GET 요청 보내기
-      const data = await apiClient.get(`posts?page=${page}`).json();
+      const response = await apiClient.get('/api/posts', {
+        searchParams: { page },
+      });
 
-      if (data.length === 0) {
-        setHasMore(false);
-      } else {
-        setPosts(prevPosts => {
-          const existingIds = new Set(prevPosts.map(post => post.id));
-          const filteredData = data.filter(post => !existingIds.has(post.id));
-          return [...prevPosts, ...filteredData];
-        });
+      const data = await response.json();
+      console.log('📢 [useFetchPosts] 불러온 게시물:', data);
 
-        setPage(prev => prev + 1);
-      }
+      return data;
     } catch (error) {
       console.error('❌ 피드 데이터를 불러오는 중 오류 발생:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
   // 🔹 첫 번째 페이지 로드
+  // 🔹 첫 번째 페이지 로드
   useEffect(() => {
-    fetchPosts();
+    fetchPosts().then(data => {
+      if (data) {
+        setPosts(data);
+      } else {
+        console.warn('⚠️ [useFetchPosts] 불러온 데이터가 없음!');
+      }
+    });
   }, []);
 
   // 🔹 Intersection Observer를 사용한 무한 스크롤 구현
@@ -49,9 +45,9 @@ const useFetchPosts = () => {
 
     observerInstance.current = new IntersectionObserver(
       entries => {
-        if (entries[0].isIntersecting && !loading) {
+        if (entries[0].isIntersecting && !isLoading) {
           console.log('🔍 [INFO] Observer 트리거됨 - 추가 데이터 로드');
-          fetchPosts();
+          //fetchPosts();
         }
       },
       { threshold: 1.0 }
@@ -62,9 +58,9 @@ const useFetchPosts = () => {
     return () => {
       if (observerInstance.current) observerInstance.current.disconnect();
     };
-  }, [posts, hasMore, loading]);
+  }, [posts, hasMore, isLoading]);
 
-  return { posts, observerRef, loading };
+  return { posts, observerRef, isLoading };
 };
 
 export default useFetchPosts;

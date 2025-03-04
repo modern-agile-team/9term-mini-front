@@ -2,7 +2,8 @@ import ky from 'ky';
 
 const apiClient = ky.create({
   // prefixUrl: 'http://api.modonggu.site/', // ✅ 백엔드 API 주소
-  prefixUrl: 'http://43.202.196.220:3000/',
+  // prefixUrl: 'http://43.202.196.220:3000/',
+  prefixUrl: '',
   headers: {
     'Content-Type': 'application/json',
   },

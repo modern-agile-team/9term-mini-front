@@ -1,11 +1,33 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import apiClient from '@/services/apiClient'; // apiClient 사용
 import useProfileStore from '@/store/useProfileStore';
 
 const Profile = ({ onClose }) => {
   const inputRef = useRef(null);
   const { profileImage, setProfileImage } = useProfileStore();
+  const [email, setEmail] = useState('');
   const [imageModified, setImageModified] = useState(false); //이미지 변경여부확인
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await apiClient.get('api/users/me');
+        const data = await response.json();
+        console.log('✅ 사용자 정보:', data); // 응답 확인
+
+        if (data.email) {
+          // 🔥 `success` 체크 제거
+          setEmail(data.email);
+        } else {
+          console.warn('❌ 이메일 데이터가 없습니다!');
+        }
+      } catch (error) {
+        console.error('❌ 사용자 정보 가져오기 실패:', error);
+      }
+    };
+
+    fetchUserData();
+  }, []);
 
   const handleFile = file => {
     if (file && file.type.startsWith('image/')) {
@@ -20,7 +42,7 @@ const Profile = ({ onClose }) => {
 
   const handleImageUpload = async imageToUpload => {
     try {
-      const response = await apiClient.patch('/api/users/me', {
+      const response = await apiClient.patch('api/users/me', {
         json: { profileImage: imageToUpload }, // 프로필 이미지 수정
       });
 
@@ -108,7 +130,7 @@ const Profile = ({ onClose }) => {
               </svg>
             )}
           </div>
-          <h2 className="text-xl font-semibold">user1_1</h2>
+          <h2 className="text-xl font-semibold">{email}</h2>
         </div>
 
         <div className="border-t border-gray-200">
