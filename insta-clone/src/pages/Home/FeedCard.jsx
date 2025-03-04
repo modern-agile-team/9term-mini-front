@@ -50,9 +50,6 @@ const FeedCard = ({
   const handleLikeToggle = async () => {
     try {
       await toggleLike();
-      await apiClient.patch(`/api/posts/${id}/like`, {
-        json: { isLiked: !isLiked },
-      });
     } catch (error) {
       console.error('좋아요 상태 업데이트 실패:', error);
     }
