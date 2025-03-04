@@ -114,6 +114,48 @@ export const postHandlers = [
     post.content = updateData.content;
     return HttpResponse.json(post);
   }),
+  http.get('/api/posts/:id', async ({ params }) => {
+    const postId = Number(params.id);
+    const post = posts.find(p => p.id === postId);
+
+    if (!post) {
+      return HttpResponse.json(
+        { error: '게시물을 찾을 수 없습니다.' },
+        { status: 404 }
+      );
+    }
+
+    return HttpResponse.json(post);
+  }),
+
+  http.put('/api/posts/:id', async ({ request, params }) => {
+    const loggedInUser = getSessionUser();
+    if (!loggedInUser)
+      return HttpResponse.json(
+        { error: '로그인이 필요합니다.' },
+        { status: 401 }
+      );
+
+    const postId = Number(params.id);
+    const updateData = await request.json();
+    const post = posts.find(p => p.id === postId);
+
+    if (!post)
+      return HttpResponse.json(
+        { error: '게시물을 찾을 수 없습니다.' },
+        { status: 404 }
+      );
+
+    if (post.userId !== loggedInUser.id)
+      return HttpResponse.json(
+        { error: '수정 권한이 없습니다.' },
+        { status: 403 }
+      );
+
+    post.content = updateData.content;
+    post.postImg = updateData.postImg; // ✅ 이미지도 업데이트 되도록 추가
+    return HttpResponse.json(post);
+  }),
 
   http.delete('/api/posts/:id', async ({ params }) => {
     const loggedInUser = getSessionUser();
