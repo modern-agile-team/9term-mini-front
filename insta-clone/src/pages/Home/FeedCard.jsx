@@ -5,6 +5,7 @@ import useAuth from '@/hooks/useAuth';
 import useLike from '@/hooks/useLike';
 import useComments from '@/hooks/useComments';
 import apiClient from '@/services/apiClient';
+import CreatePostModal from '@/pages/Posts/CreatePostModal';
 
 const FeedCard = ({
   id,
@@ -24,24 +25,15 @@ const FeedCard = ({
     currentUser: user,
   });
 
-  // 게시물 수정
-  const handleEditPost = async () => {
-    const newContent = prompt('게시글을 입력하세요:', postContent);
-    if (!newContent) return;
+  // ✅ 수정 모드 상태 추가
+  const [isEditMode, setIsEditMode] = useState(false);
 
-    try {
-      await apiClient.patch(`api/posts/${id}`, {
-        json: { content: newContent },
-      });
-
-      alert('게시물이 수정되었습니다.');
-      setPostContent(newContent);
-    } catch (error) {
-      console.error('게시물 수정 실패:', error);
-    }
+  // ✅ 게시물 수정 (모달 열기)
+  const handleEditPost = () => {
+    setIsEditMode(true); // 수정 모드 활성화
   };
 
-  // 게시물 삭제
+  // ✅ 게시물 삭제
   const handleDeletePost = async () => {
     if (!window.confirm('정말로 이 게시물을 삭제하시겠습니까?')) return;
 
@@ -54,10 +46,11 @@ const FeedCard = ({
     }
   };
 
+  // ✅ 좋아요 토글
   const handleLikeToggle = async () => {
     try {
       await toggleLike();
-      const response = await apiClient.patch(`/api/posts/${id}/like`, {
+      await apiClient.patch(`/api/posts/${id}/like`, {
         json: { isLiked: !isLiked },
       });
     } catch (error) {
@@ -77,8 +70,7 @@ const FeedCard = ({
             alt="Profile"
             className="w-8 h-8 rounded-full"
           />
-          <span className="font-bold text-xs">{email}</span>{' '}
-          {/* 🔥 변경된 부분 */}
+          <span className="font-bold text-xs">{email}</span>
         </div>
         {user?.id === userId && (
           <div className="flex space-x-2">
@@ -115,8 +107,7 @@ const FeedCard = ({
         </div>
         <p className="text-sm font-bold">좋아요 {likeCount}개</p>
         <p className="text-sm mt-1">
-          <span className="font-bold">{email}</span> {postContent}{' '}
-          {/* 🔥 변경된 부분 */}
+          <span className="font-bold">{email}</span> {postContent}
         </p>
         <p
           className="text-xs text-gray-500 mt-1 cursor-pointer"
@@ -141,6 +132,14 @@ const FeedCard = ({
           </>
         )}
       </div>
+
+      {/* ✅ 게시물 수정 모달 */}
+      {isEditMode && (
+        <CreatePostModal
+          onClose={() => setIsEditMode(false)}
+          post={{ id, postImg, content: postContent }} // 기존 게시물 데이터 전달
+        />
+      )}
     </div>
   );
 };
