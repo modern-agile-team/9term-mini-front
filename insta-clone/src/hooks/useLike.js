@@ -12,15 +12,14 @@ export default function useLike(initialLikes = 0, postId) {
     }
 
     try {
-      const response = await apiClient
-        .patch(`/api/posts/${postId}/like`, {
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ isLiked: !isLiked }),
+      const data = await apiClient
+        .patch(`api/posts/${postId}/like`, {
+          json: { isLiked: !isLiked }, // ✅ ky에서는 json 속성을 사용
         })
         .json();
 
-      setIsLiked(response.liked);
-      setLikeCount(response.likes);
+      setIsLiked(data.likes > likeCount);
+      setLikeCount(data.likes);
     } catch (error) {
       console.error('❌ 좋아요 토글 실패:', error);
     }
