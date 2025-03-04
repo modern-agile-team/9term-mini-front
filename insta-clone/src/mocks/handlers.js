@@ -7,14 +7,16 @@ let users = [
     username: 'hee_min',
     email: 'af@naver.com',
     password: '1q2w3e4r', // 실제로는 비번을 저장하면 안 되지만, 여기서는 모킹 데이터라 허용
-    profileImg: 'https://via.placeholder.com/150',
+    profileImg:
+      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS7LpapIl8DITfz4_Y2z7pqs7FknPkjReAZCg&s',
   },
   {
     id: 2,
     username: 'user2',
     email: 'user2@example.com',
     password: 'password123',
-    profileImg: 'https://via.placeholder.com/150',
+    profileImg:
+      'https://cdn.pixabay.com/photo/2024/02/26/19/39/monochrome-image-8598798_1280.jpg',
   },
 ];
 
@@ -139,7 +141,6 @@ export const handlers = [
     const startIndex = (page - 1) * perPage;
     const paginatedPosts = posts.slice(startIndex, startIndex + perPage);
 
-    console.log(`📢 [MSW] ${page} 페이지 게시물 로드됨`);
     return HttpResponse.json(paginatedPosts);
   }),
 
@@ -207,7 +208,7 @@ export const handlers = [
   }),
 
   // ✅ 좋아요 / 좋아요 취소 (`POST /api/posts/:id/like`)
-  http.post('/api/posts/:id/like', async ({ params }) => {
+  http.patch('/api/posts/:id/like', async ({ params, request }) => {
     const loggedInUser = getSessionUser();
     if (!loggedInUser) {
       return HttpResponse.json(
@@ -226,14 +227,15 @@ export const handlers = [
       );
     }
 
-    if (post.likedBy.includes(loggedInUser.username)) {
-      post.likes -= 1;
-      post.likedBy = post.likedBy.filter(
-        user => user !== loggedInUser.username
-      );
+    const { isLiked } = await request.json();
+    if (isLiked) {
+      if (!post.likedBy.includes(loggedInUser.email)) {
+        post.likes += 1;
+        post.likedBy.push(loggedInUser.email);
+      }
     } else {
-      post.likes += 1;
-      post.likedBy.push(loggedInUser.username);
+      post.likes = Math.max(0, post.likes - 1);
+      post.likedBy = post.likedBy.filter(email => email !== loggedInUser.email);
     }
 
     return HttpResponse.json({ success: true, likes: post.likes });
@@ -250,8 +252,6 @@ export const handlers = [
         { status: 404 }
       );
     }
-
-    console.log(`📢 [MSW] 댓글 데이터:`, post.comments);
 
     return HttpResponse.json(post.comments);
   }),
@@ -281,7 +281,7 @@ export const handlers = [
 
     const comment = {
       id: newId,
-      username: loggedInUser.username,
+      email: loggedInUser.email,
       text: newComment.text,
     };
 
@@ -305,7 +305,7 @@ export const handlers = [
       );
 
       if (commentIndex !== -1) {
-        if (post.comments[commentIndex].username !== loggedInUser.username) {
+        if (post.comments[commentIndex].email !== loggedInUser.email) {
           return HttpResponse.json(
             { error: '삭제 권한이 없습니다.' },
             { status: 403 }

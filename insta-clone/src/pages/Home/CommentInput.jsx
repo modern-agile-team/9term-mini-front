@@ -2,8 +2,6 @@ import { useState, useRef } from 'react';
 import useComments from '@/hooks/useComments'; // useComments 훅 사용
 
 const CommentInput = ({ postId }) => {
-  console.log(`📢 [CommentInput] 받은 postId: ${postId}`); // ✅ postId 확인 로그
-
   const [newComment, setNewComment] = useState('');
   const isSubmitting = useRef(false);
   const isComposing = useRef(false);

@@ -60,11 +60,6 @@ const FeedCard = ({
       const response = await apiClient.patch(`/api/posts/${id}/like`, {
         json: { isLiked: !isLiked },
       });
-      if (response.ok) {
-        alert('좋아요 상태가 업데이트되었습니다.');
-      } else {
-        alert('좋아요 상태 업데이트에 실패했습니다.');
-      }
     } catch (error) {
       console.error('좋아요 상태 업데이트 실패:', error);
     }
