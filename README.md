@@ -3,6 +3,7 @@
 
 ## 배포링크
 https://modern9.netlify.app/
+https://modonggu.site
 
 ## 구현 화면
 <img width="767" alt="image" src="https://github.com/user-attachments/assets/fa9da7eb-6750-425a-b8a6-155651c38ca3" />
