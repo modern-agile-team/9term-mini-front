@@ -13,7 +13,7 @@ const useComments = ({ postId }) => {
     }
 
     try {
-      const response = await apiClient.get(`/api/posts/${postId}/comments`);
+      const response = await apiClient.get(`api/posts/${postId}/comments`);
       const data = await response.json();
       setCommentList(data); // ✅ 댓글 목록 업데이트
     } catch (error) {
@@ -38,7 +38,7 @@ const useComments = ({ postId }) => {
     }
 
     try {
-      const response = await apiClient.post(`/api/posts/${postId}/comments`, {
+      const response = await apiClient.post(`api/posts/${postId}/comments`, {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: newComment }),
       });
@@ -59,7 +59,7 @@ const useComments = ({ postId }) => {
   // ✅ 댓글 삭제 함수 (삭제 후 즉시 화면 업데이트)
   const deleteComment = async commentId => {
     try {
-      const response = await apiClient.delete(`/api/comments/${commentId}`);
+      const response = await apiClient.delete(`api/comments/${commentId}`);
       if (!response.ok) throw new Error('댓글 삭제 실패');
 
       // ✅ 화면 즉시 업데이트: 삭제된 댓글 제거

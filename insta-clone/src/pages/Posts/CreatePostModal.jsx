@@ -14,7 +14,7 @@ const CreatePostModal = ({ onClose, postId, initialData = {} }) => {
     if (postId) {
       const fetchPost = async () => {
         try {
-          const response = await apiClient.get(`/api/posts/${postId}`).json();
+          const response = await apiClient.get(`api/posts/${postId}`).json();
           if (!response) throw new Error('게시물을 불러올 수 없습니다.');
 
           setSelectedImage(response.postImg);
@@ -65,13 +65,13 @@ const CreatePostModal = ({ onClose, postId, initialData = {} }) => {
       let response;
       if (postId) {
         response = await apiClient
-          .put(`/api/posts/${postId}`, {
+          .put(`api/posts/${postId}`, {
             json: { postImg: selectedImage, content: caption },
           })
           .json();
       } else {
         response = await apiClient
-          .post('/api/posts', {
+          .post('api/posts', {
             json: { postImg: selectedImage, content: caption },
           })
           .json();

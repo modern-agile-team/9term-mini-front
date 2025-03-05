@@ -67,7 +67,7 @@ const Profile = ({ onClose }) => {
 
   const handleImageDelete = async () => {
     try {
-      const response = await apiClient.delete('/api/users/me', {
+      const response = await apiClient.delete('api/users/me', {
         json: { profileImage: null }, // 프로필 이미지 삭제
       });
 

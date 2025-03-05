@@ -12,7 +12,7 @@ const useFetchPosts = () => {
   // 🔹 API에서 피드 데이터 불러오기 (ky 사용)
   const fetchPosts = async (page = 1) => {
     try {
-      const response = await apiClient.get('/api/posts', {
+      const response = await apiClient.get('api/posts', {
         searchParams: { page },
       });
 
