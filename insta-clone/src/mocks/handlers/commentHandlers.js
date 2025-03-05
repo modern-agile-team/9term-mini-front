@@ -40,7 +40,7 @@ const getSessionUser = () => {
 
 // ✅ 댓글 목록 조회 (`GET /api/posts/:id/comments`)
 const getCommentsHandler = http.get(
-  '/api/posts/:id/comments',
+  'api/posts/:id/comments',
   async ({ params }) => {
     const postId = Number(params.id);
     const post = posts.find(p => p.id === postId);
@@ -58,7 +58,7 @@ const getCommentsHandler = http.get(
 
 // ✅ 댓글 추가 (`POST /api/posts/:id/comments`)
 const addCommentHandler = http.post(
-  '/api/posts/:id/comments',
+  'api/posts/:id/comments',
   async ({ request, params }) => {
     const loggedInUser = getSessionUser();
     if (!loggedInUser) {
@@ -94,7 +94,7 @@ const addCommentHandler = http.post(
 
 // ✅ 댓글 삭제 (`DELETE /api/comments/:id`)
 const deleteCommentHandler = http.delete(
-  '/api/comments/:id',
+  'api/comments/:id',
   async ({ params }) => {
     const loggedInUser = getSessionUser();
     if (!loggedInUser) {

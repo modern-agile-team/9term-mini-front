@@ -40,7 +40,7 @@ const getSessionUser = () => {
 
 // ✅ 좋아요 / 좋아요 취소 핸들러 추가 (누락된 부분 수정!)
 const likePostHandler = http.patch(
-  '/api/posts/:id/like',
+  'api/posts/:id/like',
   async ({ params, request }) => {
     const loggedInUser = getSessionUser();
     if (!loggedInUser) {
@@ -77,7 +77,7 @@ const likePostHandler = http.patch(
 
 // ✅ 기존 postHandlers에 likePostHandler 추가
 export const postHandlers = [
-  http.get('/api/posts', async ({ request }) => {
+  http.get('api/posts', async ({ request }) => {
     const url = new URL(request.url);
     const page = Number(url.searchParams.get('page')) || 1;
     const perPage = 2;
@@ -87,7 +87,7 @@ export const postHandlers = [
     return HttpResponse.json(paginatedPosts);
   }),
 
-  http.patch('/api/posts/:id', async ({ request, params }) => {
+  http.patch('api/posts/:id', async ({ request, params }) => {
     const loggedInUser = getSessionUser();
     if (!loggedInUser)
       return HttpResponse.json(
@@ -114,7 +114,7 @@ export const postHandlers = [
     post.content = updateData.content;
     return HttpResponse.json(post);
   }),
-  http.get('/api/posts/:id', async ({ params }) => {
+  http.get('api/posts/:id', async ({ params }) => {
     const postId = Number(params.id);
     const post = posts.find(p => p.id === postId);
 
@@ -128,7 +128,7 @@ export const postHandlers = [
     return HttpResponse.json(post);
   }),
 
-  http.put('/api/posts/:id', async ({ request, params }) => {
+  http.put('api/posts/:id', async ({ request, params }) => {
     const loggedInUser = getSessionUser();
     if (!loggedInUser)
       return HttpResponse.json(
@@ -157,7 +157,7 @@ export const postHandlers = [
     return HttpResponse.json(post);
   }),
 
-  http.delete('/api/posts/:id', async ({ params }) => {
+  http.delete('api/posts/:id', async ({ params }) => {
     const loggedInUser = getSessionUser();
     if (!loggedInUser)
       return HttpResponse.json(
@@ -183,7 +183,6 @@ export const postHandlers = [
     posts.splice(postIndex, 1);
     return HttpResponse.json({ success: true, msg: '게시물 삭제 완료' });
   }),
-    
 
   likePostHandler,
 ];

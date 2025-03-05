@@ -14,7 +14,7 @@ function useAuth() {
       checkedAuth.current = true;
 
       try {
-        const response = await apiClient.get('/api/users/me');
+        const response = await apiClient.get('api/users/me');
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
@@ -39,7 +39,7 @@ function useAuth() {
 
   const logout = async () => {
     try {
-      const response = await apiClient.post('/api/logout');
+      const response = await apiClient.post('api/logout');
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }

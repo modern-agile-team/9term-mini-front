@@ -23,7 +23,7 @@ export default defineConfig({
     proxy: {
       '/api': {
         // '/api'로 시작하는 모든 요청에 대해
-        target: 'http://localhost:your-backend-port', // 실제 백엔드 서버 주소로 포워딩
+        target: 'https://api.modonggu.site/', // 실제 백엔드 서버 주소로 포워딩
         changeOrigin: true, // 요청 헤더의 host 값을 target URL로 변경
         secure: false, // HTTPS 검증 비활성화 (개발 환경에서 사용)
       },
