@@ -183,6 +183,7 @@ export const postHandlers = [
     posts.splice(postIndex, 1);
     return HttpResponse.json({ success: true, msg: '게시물 삭제 완료' });
   }),
+    
 
   likePostHandler,
 ];

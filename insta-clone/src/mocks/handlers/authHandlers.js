@@ -81,10 +81,80 @@ const logoutHandler = http.post('/api/logout', async () => {
   sessionStorage.removeItem('sessionUser');
   return HttpResponse.json({ success: true, msg: '로그아웃 성공' });
 });
+ //프로필업로드
+const profileHandler = http.patch('/api/users/me', async ({ request }) => {
+  const loggedInUser = getSessionUser();
+  if (!loggedInUser) {
+    return HttpResponse.json(
+      { error: '로그인이 필요합니다.' },
+      { status: 401 }
+    );
+  }
+
+  try {
+    const updateData = await request.json();
+    console.log('프로필 이미지 업데이트 요청 받음');
+    
+    // 세션 사용자 정보 업데이트
+    const updatedUser = {
+      ...loggedInUser,
+      profileImage: updateData.profileImage
+    };
+    
+    // 세션에 업데이트된 사용자 정보 저장
+    sessionStorage.setItem('sessionUser', JSON.stringify(updatedUser));
+    
+    return HttpResponse.json({
+      success: true,
+      message: '프로필 이미지가 업데이트되었습니다.'
+    });
+  } catch (error) {
+    console.error('프로필 이미지 업데이트 오류:', error);
+    return HttpResponse.json(
+      { error: '프로필 이미지 업데이트 중 오류가 발생했습니다.' },
+      { status: 500 }
+    );
+  }
+});
+
+// 이미지 삭제 핸들러도 필요합니다
+const profiledeleteHandler = http.delete('/api/users/me', async ({ request }) => {
+  const loggedInUser = getSessionUser();
+  if (!loggedInUser) {
+    return HttpResponse.json(
+      { error: '로그인이 필요합니다.' },
+      { status: 401 }
+    );
+  }
+
+  try {
+    // 세션 사용자 정보 업데이트 - 프로필 이미지 제거
+    const updatedUser = {
+      ...loggedInUser,
+      profileImage: null
+    };
+    
+    // 세션에 업데이트된 사용자 정보 저장
+    sessionStorage.setItem('sessionUser', JSON.stringify(updatedUser));
+    
+    return HttpResponse.json({
+      success: true,
+      message: '프로필 이미지가 삭제되었습니다.'
+    });
+  } catch (error) {
+    console.error('프로필 이미지 삭제 오류:', error);
+    return HttpResponse.json(
+      { error: '프로필 이미지 삭제 중 오류가 발생했습니다.' },
+      { status: 500 }
+    );
+  }
+});
 
 export const authHandlers = [
   registerHandler,
   loginHandler,
   getMeHandler,
   logoutHandler,
+  profileHandler,
+  profiledeleteHandler,
 ];

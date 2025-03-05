@@ -3,7 +3,9 @@ import apiClient from '@/services/apiClient';
 
 const CreatePostModal = ({ onClose, postId, initialData = {} }) => {
   const [dragActive, setDragActive] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(initialData.postImg || null);
+  const [selectedImage, setSelectedImage] = useState(
+    initialData.postImg || null
+  );
   const [caption, setCaption] = useState(initialData.content || '');
   const inputRef = useRef(null);
 
@@ -90,28 +92,29 @@ const CreatePostModal = ({ onClose, postId, initialData = {} }) => {
       if (
         window.confirm('작성 중인 내용이 삭제됩니다. 그래도 나가시겠습니까?')
       ) {
-        onClose();  
-      } 
-    } else {
         onClose();
+      }
+    } else {
+      onClose();
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
-      onClick={handleCancel}>
-      <button
-        onClick={handleCancel}
-        className="absolute top-3 right-3"
-      > 
-        <img 
-          src="/assets/icons/cancel.svg" 
+    <div
+      className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
+      onClick={handleCancel}
+    >
+      <button onClick={handleCancel} className="absolute top-3 right-3">
+        <img
+          src="/assets/icons/cancel.svg"
           className="w-7 h-7 hover:opacity-60 transition-colors brightness-0 invert-[1]"
         />
       </button>
-      
-      <div className="bg-white w-full max-w-[500px] rounded-xl h-[min(90vh,500px)] flex flex-col"
-        onClick={(e) => e.stopPropagation()}>
+
+      <div
+        className="bg-white w-full max-w-[500px] rounded-xl h-[min(90vh,500px)] flex flex-col"
+        onClick={e => e.stopPropagation()}
+      >
         {/* 헤더 */}
         <div className="relative flex items-center justify-center p-3 border-b border-gray-200">
           <h2 className="text-base font-semibold">
