@@ -15,9 +15,16 @@ const useComments = ({ postId }) => {
     try {
       const response = await apiClient.get(`api/posts/${postId}/comments`);
       const data = await response.json();
-      setCommentList(data); // ✅ 댓글 목록 업데이트
+
+      if (data.success) {
+        setCommentList(data.data);
+      } else {
+        // 서버 응답은 성공했지만 비즈니스 로직 실패
+        console.error(`❌ 서버 응답: ${data.message}`);
+      }
     } catch (error) {
-      console.error('❌ 댓글 데이터를 불러올 수 없습니다.', error);
+      // API 호출 자체가 실패
+      console.error('❌ API 호출 실패:', error.message);
     } finally {
       setIsLoading(false);
     }
@@ -31,28 +38,27 @@ const useComments = ({ postId }) => {
   // ✅ 댓글 추가 함수 (새 댓글이 즉시 화면에 반영됨)
   const addComment = async newComment => {
     if (!postId) {
-      console.error(
-        '❌ [useComments] postId가 undefined입니다. 댓글을 추가할 수 없음!'
-      );
+      console.error('❌ postId가 없습니다');
       return;
     }
 
     try {
       const response = await apiClient.post(`api/posts/${postId}/comments`, {
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: newComment }),
+        json: { comment: newComment },
       });
 
-      if (!response.ok) throw new Error('댓글 추가 실패');
+      const data = await response.json();
 
-      const createdComment = await response.json();
-
-      // ✅ setTimeout으로 React가 상태 변경을 감지하게 유도
-      setTimeout(() => {
+      if (data.success) {
+        const createdComment = data.data;
         setCommentList(prev => [...prev, createdComment]);
-      }, 0);
+      } else {
+        // 서버 응답은 성공했지만 댓글 추가 실패
+        console.error(`❌ 댓글 추가 실패: ${data.message}`);
+      }
     } catch (error) {
-      console.error('❌ 댓글 추가 실패:', error);
+      // API 호출 자체가 실패
+      console.error('❌ 네트워크 오류:', error.message);
     }
   };
 
@@ -60,17 +66,21 @@ const useComments = ({ postId }) => {
   const deleteComment = async commentId => {
     try {
       const response = await apiClient.delete(`api/comments/${commentId}`);
-      if (!response.ok) throw new Error('댓글 삭제 실패');
+      const data = await response.json();
 
-      // ✅ 화면 즉시 업데이트: 삭제된 댓글 제거
-      setCommentList(prev => prev.filter(comment => comment.id !== commentId));
+      if (data.success) {
+        setCommentList(prev =>
+          prev.filter(comment => comment.id !== commentId)
+        );
+      } else {
+        // 서버 응답은 성공했지만 댓글 삭제 실패
+        console.error(`❌ 댓글 삭제 실패: ${data.message}`);
+      }
     } catch (error) {
-      console.error('❌ 댓글 삭제 실패:', error);
+      // API 호출 자체가 실패
+      console.error('❌ 네트워크 오류:', error.message);
     }
   };
-
-  // ✅ 댓글 목록 변경 시 콘솔 확인
-  useEffect(() => {}, [commentList]);
 
   return { commentList, addComment, deleteComment, isLoading };
 };

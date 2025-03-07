@@ -65,7 +65,7 @@ const CreatePostModal = ({ onClose, postId, initialData = {} }) => {
       let response;
       if (postId) {
         response = await apiClient
-          .put(`api/posts/${postId}`, {
+          .patch(`api/posts/${postId}`, {
             json: { postImg: selectedImage, content: caption },
           })
           .json();

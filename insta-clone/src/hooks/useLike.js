@@ -13,7 +13,7 @@ export default function useLike(initialLikes = 0, postId) {
 
     try {
       const data = await apiClient
-        .patch(`api/posts/${postId}/like`, {
+        .post(`api/posts/${postId}/like`, {
           json: { isLiked: !isLiked }, // ✅ ky에서는 json 속성을 사용
         })
         .json();
