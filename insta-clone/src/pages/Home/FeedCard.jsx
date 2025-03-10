@@ -58,12 +58,20 @@ const FeedCard = ({
         }
 
         // 작성자가 현재 로그인한 사용자가 아닌 경우, 백엔드에서 작성자 정보 가져오기
-        const response = await apiClient
-          .get(`api/users/profile/${author}`, { throwHttpErrors: false })
-          .json();
+        const response = await apiClient.get(`api/users/profile/${author}`, {
+          throwHttpErrors: false,
+        });
 
-        if (response.success && response.data) {
-          setAuthorProfileImg(response.data.profileImg);
+        // 응답이 JSON인지 확인
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const jsonResponse = await response.json();
+
+          if (jsonResponse.success && jsonResponse.data) {
+            setAuthorProfileImg(jsonResponse.data.profileImg);
+          }
+        } else {
+          console.error('❌ 응답이 JSON 형식이 아님:', contentType);
         }
       } catch (error) {
         console.error('작성자 프로필 이미지 가져오기 실패:', error);
@@ -101,7 +109,22 @@ const FeedCard = ({
     if (!window.confirm('정말로 이 게시물을 삭제하시겠습니까?')) return;
 
     try {
-      await apiClient.delete(`api/posts/${postId}`);
+      const response = await apiClient.delete(`api/posts/${postId}`, {
+        throwHttpErrors: false,
+      });
+
+      // 응답이 JSON인지 확인
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const jsonResponse = await response.json();
+
+        if (!jsonResponse.success) {
+          throw new Error(
+            jsonResponse.message || '게시물 삭제에 실패했습니다.'
+          );
+        }
+      }
+
       alert('게시물이 삭제되었습니다.');
 
       // ✅ 삭제 콜백 함수가 있을 경우 실행
@@ -200,7 +223,36 @@ const FeedCard = ({
       {/* 게시물 수정 모달 */}
       {isEditMode && (
         <CreatePostModal
-          onClose={() => setIsEditMode(false)}
+          onClose={() => {
+            setIsEditMode(false);
+            // 게시글 수정 후 최신 데이터 가져오기
+            const fetchUpdatedPost = async () => {
+              try {
+                const response = await apiClient.get(`api/posts/${postId}`, {
+                  throwHttpErrors: false,
+                });
+
+                // 응답이 JSON인지 확인
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                  const jsonResponse = await response.json();
+
+                  if (jsonResponse.success && jsonResponse.data) {
+                    setPostContent(jsonResponse.data.content);
+                    console.log(
+                      '✅ [FeedCard] 게시글 업데이트 완료:',
+                      jsonResponse.data
+                    );
+                  }
+                } else {
+                  console.error('❌ 응답이 JSON 형식이 아님:', contentType);
+                }
+              } catch (error) {
+                console.error('게시글 업데이트 실패:', error);
+              }
+            };
+            fetchUpdatedPost();
+          }}
           postId={postId}
           initialData={{ postImg, content: postContent }}
         />

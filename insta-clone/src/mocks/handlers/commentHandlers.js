@@ -38,8 +38,9 @@ let comments = [
 
 // 세션에서 사용자 가져오기
 const getSessionUser = () => {
-  const session = sessionStorage.getItem('sessionUser');
-  return session ? JSON.parse(session) : null;
+  const sessionUser = sessionStorage.getItem('sessionUser');
+  console.log('🔍 [MSW] 세션 사용자 확인:', sessionUser ? '있음' : '없음');
+  return sessionUser ? JSON.parse(sessionUser) : null;
 };
 
 // ✅ 특정 게시물의 댓글 목록 조회

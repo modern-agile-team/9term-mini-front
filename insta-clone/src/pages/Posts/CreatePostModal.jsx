@@ -15,16 +15,34 @@ const CreatePostModal = ({ onClose, postId, initialData = {} }) => {
     if (postId) {
       const fetchPost = async () => {
         try {
-          const response = await apiClient.get(`api/posts/${postId}`).json();
-          if (!response.success) {
-            throw new Error(response.message || '게시물을 불러올 수 없습니다.');
-          }
+          const response = await apiClient.get(`api/posts/${postId}`, {
+            throwHttpErrors: false,
+          });
 
-          setSelectedImage(response.data.postImg);
-          setCaption(response.data.content);
+          // 응답이 JSON인지 확인
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const jsonResponse = await response.json();
+
+            if (!jsonResponse.success) {
+              throw new Error(
+                jsonResponse.message || '게시물을 불러올 수 없습니다.'
+              );
+            }
+
+            setSelectedImage(jsonResponse.data.postImg);
+            setCaption(jsonResponse.data.content);
+            console.log(
+              '✅ [CreatePostModal] 게시물 불러오기 성공:',
+              jsonResponse.data
+            );
+          } else {
+            console.error('❌ 응답이 JSON 형식이 아님:', contentType);
+            throw new Error('서버 응답 형식 오류');
+          }
         } catch (error) {
           console.error('게시물 불러오기 오류:', error);
-          alert(error.message);
+          alert(error.message || '게시물을 불러올 수 없습니다.');
         }
       };
       fetchPost();
@@ -63,7 +81,8 @@ const CreatePostModal = ({ onClose, postId, initialData = {} }) => {
 
   // 새 게시물 업로드 또는 수정
   const handleUpload = async () => {
-    if (!selectedImage) {
+    // 새 게시물 생성 시에만 이미지 필수 체크
+    if (!postId && !selectedImage) {
       alert('이미지를 선택해주세요.');
       return;
     }
@@ -73,18 +92,57 @@ const CreatePostModal = ({ onClose, postId, initialData = {} }) => {
 
     try {
       let response;
+      const requestData = {
+        content: caption,
+      };
+
+      // 이미지가 있는 경우에만 요청 데이터에 포함
+      if (selectedImage) {
+        requestData.postImg = selectedImage;
+      }
+
+      console.log('✅ [CreatePostModal] 요청 데이터:', requestData);
+
       if (postId) {
-        response = await apiClient
-          .put(`api/posts/${postId}`, {
-            json: { postImg: selectedImage, content: caption },
-          })
-          .json();
+        // 게시글 수정
+        try {
+          response = await apiClient.patch(`api/posts/${postId}`, {
+            json: requestData,
+            throwHttpErrors: false,
+          });
+
+          // 응답이 JSON인지 확인
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            response = await response.json();
+          } else {
+            console.error('❌ 응답이 JSON 형식이 아님:', contentType);
+            throw new Error('서버 응답 형식 오류');
+          }
+        } catch (error) {
+          console.error('❌ 게시글 수정 요청 오류:', error);
+          throw error;
+        }
       } else {
-        response = await apiClient
-          .post('api/posts', {
-            json: { postImg: selectedImage, content: caption },
-          })
-          .json();
+        // 새 게시글 생성
+        try {
+          response = await apiClient.post('api/posts', {
+            json: requestData,
+            throwHttpErrors: false,
+          });
+
+          // 응답이 JSON인지 확인
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            response = await response.json();
+          } else {
+            console.error('❌ 응답이 JSON 형식이 아님:', contentType);
+            throw new Error('서버 응답 형식 오류');
+          }
+        } catch (error) {
+          console.error('❌ 게시글 생성 요청 오류:', error);
+          throw error;
+        }
       }
 
       if (!response.success) {
@@ -95,7 +153,7 @@ const CreatePostModal = ({ onClose, postId, initialData = {} }) => {
       onClose();
     } catch (error) {
       console.error('게시물 저장 오류:', error);
-      alert(error.message);
+      alert(error.message || '게시물 저장 중 오류가 발생했습니다.');
     } finally {
       setIsSubmitting(false);
     }

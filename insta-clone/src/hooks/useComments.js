@@ -24,14 +24,26 @@ const useComments = ({ postId } = {}) => {
     if (!postId) return; // ✅ postId가 없으면 API 요청하지 않음
 
     try {
-      const response = await apiClient
-        .get(`api/posts/${postId}/comments`)
-        .json();
+      const response = await apiClient.get(`api/posts/${postId}/comments`, {
+        throwHttpErrors: false,
+      });
 
-      if (response.success) {
-        setCommentList(response.data || []);
+      // 응답이 JSON인지 확인
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const jsonResponse = await response.json();
+
+        if (jsonResponse.success) {
+          setCommentList(jsonResponse.data || []);
+        } else {
+          console.warn(
+            '⚠️ [useComments] 댓글 불러오기 실패:',
+            jsonResponse.message
+          );
+          setCommentList([]);
+        }
       } else {
-        console.warn('⚠️ [useComments] 댓글 불러오기 실패:', response.message);
+        console.error('❌ 응답이 JSON 형식이 아님:', contentType);
         setCommentList([]);
       }
     } catch (error) {
@@ -58,36 +70,50 @@ const useComments = ({ postId } = {}) => {
     }
 
     try {
-      const response = await apiClient
-        .post(`api/posts/${postId}/comments`, { json: { comment: newComment } })
-        .json();
+      const response = await apiClient.post(`api/posts/${postId}/comments`, {
+        json: { comment: newComment },
+        throwHttpErrors: false,
+      });
 
-      if (response.success) {
-        // 세션 스토리지에서 사용자 정보 가져오기
-        const sessionUserStr = sessionStorage.getItem('sessionUser');
-        const sessionUser = sessionUserStr ? JSON.parse(sessionUserStr) : null;
+      // 응답이 JSON인지 확인
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const jsonResponse = await response.json();
 
-        const newCommentData = {
-          id: response.data.id,
-          postId,
-          userId:
-            response.data.userId ||
-            (sessionUser ? sessionUser.email : 'unknown'),
-          comment: newComment,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
+        if (jsonResponse.success) {
+          // 세션 스토리지에서 사용자 정보 가져오기
+          const sessionUserStr = sessionStorage.getItem('sessionUser');
+          const sessionUser = sessionUserStr
+            ? JSON.parse(sessionUserStr)
+            : null;
 
-        console.log('✅ 새 댓글 데이터:', newCommentData);
+          const newCommentData = {
+            id: jsonResponse.data.id,
+            postId,
+            userId:
+              jsonResponse.data.userId ||
+              (sessionUser ? sessionUser.email : 'unknown'),
+            comment: newComment,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
 
-        // 댓글 목록에 새 댓글 추가
-        setCommentList(prev => [...prev, newCommentData]);
-        console.log(`✅ 댓글 추가 성공 (ID: ${response.data.id})`);
+          console.log('✅ 새 댓글 데이터:', newCommentData);
 
-        // 댓글 목록 다시 불러오기
-        await fetchComments();
+          // 댓글 목록에 새 댓글 추가
+          setCommentList(prev => [...prev, newCommentData]);
+          console.log(`✅ 댓글 추가 성공 (ID: ${jsonResponse.data.id})`);
+
+          // 댓글 목록 다시 불러오기
+          await fetchComments();
+        } else {
+          console.warn(
+            '⚠️ [useComments] 댓글 추가 실패:',
+            jsonResponse.message
+          );
+        }
       } else {
-        console.warn('⚠️ [useComments] 댓글 추가 실패:', response.message);
+        console.error('❌ 응답이 JSON 형식이 아님:', contentType);
       }
     } catch (error) {
       console.error('❌ 댓글 추가 실패:', error);
@@ -97,17 +123,33 @@ const useComments = ({ postId } = {}) => {
   // ✅ 댓글 삭제 함수
   const deleteComment = async commentId => {
     try {
-      const response = await apiClient
-        .delete(`api/posts/${postId}/comments/${commentId}`)
-        .json();
+      const response = await apiClient.delete(
+        `api/posts/${postId}/comments/${commentId}`,
+        { throwHttpErrors: false }
+      );
 
-      if (response.success) {
+      // 응답이 JSON인지 확인
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const jsonResponse = await response.json();
+
+        if (jsonResponse.success) {
+          setCommentList(prev =>
+            prev.filter(comment => comment.id !== commentId)
+          );
+          console.log(`✅ 댓글 삭제 성공 (ID: ${commentId})`);
+        } else {
+          console.warn(
+            '⚠️ [useComments] 댓글 삭제 실패:',
+            jsonResponse.message
+          );
+        }
+      } else {
+        console.error('❌ 응답이 JSON 형식이 아님:', contentType);
+        // 응답이 JSON이 아니더라도 UI에서는 삭제된 것처럼 처리
         setCommentList(prev =>
           prev.filter(comment => comment.id !== commentId)
         );
-        console.log(`✅ 댓글 삭제 성공 (ID: ${commentId})`);
-      } else {
-        console.warn('⚠️ [useComments] 댓글 삭제 실패:', response.message);
       }
     } catch (error) {
       console.error('❌ 댓글 삭제 실패:', error);

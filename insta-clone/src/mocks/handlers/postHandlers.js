@@ -27,9 +27,11 @@ let posts = [
   },
 ];
 
+// ✅ 세션에서 사용자 정보 가져오기
 const getSessionUser = () => {
-  const session = sessionStorage.getItem('sessionUser');
-  return session ? JSON.parse(session) : null;
+  const sessionUser = sessionStorage.getItem('sessionUser');
+  console.log('🔍 [MSW] 세션 사용자 확인:', sessionUser ? '있음' : '없음');
+  return sessionUser ? JSON.parse(sessionUser) : null;
 };
 
 // ✅ 새로운 postId 생성 함수
@@ -52,6 +54,32 @@ const getPostsHandler = http.get('api/posts', async () => {
         success: false,
         message: '게시물 조회 중 오류가 발생했습니다.',
       },
+      { status: 500 }
+    );
+  }
+});
+
+// ✅ 게시물 상세 조회 (`GET /api/posts/:id`)
+const getPostByIdHandler = http.get('api/posts/:id', async ({ params }) => {
+  try {
+    const postId = Number(params.id);
+    const post = posts.find(p => p.postId === postId);
+
+    if (!post) {
+      return HttpResponse.json(
+        { success: false, message: '게시물을 찾을 수 없습니다.' },
+        { status: 404 }
+      );
+    }
+
+    return HttpResponse.json({
+      success: true,
+      message: '게시물 조회 성공',
+      data: post,
+    });
+  } catch (error) {
+    return HttpResponse.json(
+      { success: false, message: '게시물 조회 중 오류가 발생했습니다.' },
       { status: 500 }
     );
   }
@@ -90,6 +118,7 @@ const createPostHandler = http.post('api/posts', async ({ request }) => {
       postImg,
       createdAt: new Date().toISOString(),
       author: sessionUser.email,
+      likedBy: [],
     };
 
     posts.unshift(newPost);
@@ -111,8 +140,10 @@ const createPostHandler = http.post('api/posts', async ({ request }) => {
 const updatePostHandler = http.patch(
   'api/posts/:id',
   async ({ request, params }) => {
+    console.log('🔄 [MSW] PATCH 요청으로 게시물 수정 요청 받음:', params.id);
     const sessionUser = getSessionUser();
     if (!sessionUser) {
+      console.log('❌ [MSW] 게시물 수정 실패: 로그인 필요');
       return HttpResponse.json(
         { success: false, message: '로그인이 필요합니다.' },
         { status: 401 }
@@ -123,7 +154,19 @@ const updatePostHandler = http.patch(
       const postId = Number(params.id);
       const post = posts.find(p => p.postId === postId);
 
-      if (!post || post.author !== sessionUser.email) {
+      if (!post) {
+        console.log('❌ [MSW] 게시물 수정 실패: 게시물 없음');
+        return HttpResponse.json(
+          {
+            success: false,
+            message: '수정 권한이 없거나 게시물이 존재하지 않습니다.',
+          },
+          { status: 403 }
+        );
+      }
+
+      if (post.author !== sessionUser.email) {
+        console.log('❌ [MSW] 게시물 수정 실패: 권한 없음');
         return HttpResponse.json(
           {
             success: false,
@@ -134,20 +177,50 @@ const updatePostHandler = http.patch(
       }
 
       const updateData = await request.json();
-      if (updateData.postImg && !updateData.postImg.startsWith('data:image/')) {
+      console.log('🔄 [MSW] 게시물 수정 데이터:', updateData);
+
+      // 이미지가 제공된 경우에만 유효성 검사 수행
+      if (
+        updateData.postImg &&
+        updateData.postImg !== post.postImg &&
+        !updateData.postImg.startsWith('data:image/') &&
+        !updateData.postImg.startsWith('http')
+      ) {
+        console.log('❌ [MSW] 게시물 수정 실패: 유효하지 않은 이미지');
         return HttpResponse.json(
-          { error: '유효하지 않은 인코딩 이미지입니다.' },
+          { success: false, message: '유효하지 않은 인코딩 이미지입니다.' },
           { status: 400 }
         );
       }
 
-      Object.assign(post, updateData);
+      // 게시물 업데이트 (내용만 변경하는 경우 이미지는 유지)
+      const updatedPost = {
+        ...post,
+        content: updateData.content || post.content,
+      };
 
-      return HttpResponse.json({
-        success: true,
-        message: '게시물 수정 성공',
-      });
+      // 이미지가 제공된 경우에만 이미지 업데이트
+      if (updateData.postImg) {
+        updatedPost.postImg = updateData.postImg;
+      }
+
+      // 게시물 배열에서 해당 게시물 업데이트
+      const postIndex = posts.findIndex(p => p.postId === postId);
+      if (postIndex !== -1) {
+        posts[postIndex] = updatedPost;
+      }
+
+      console.log('✅ [MSW] 게시물 수정 성공:', updatedPost);
+
+      return HttpResponse.json(
+        {
+          success: true,
+          message: '게시물 수정 성공',
+        },
+        { status: 200 }
+      );
     } catch (error) {
+      console.error('❌ [MSW] 게시물 수정 중 오류:', error);
       return HttpResponse.json(
         { success: false, message: '게시물 수정 중 오류가 발생했습니다.' },
         { status: 500 }
@@ -226,14 +299,14 @@ const likePostHandler = http.post('api/posts/:id/like', async ({ params }) => {
       return HttpResponse.json({
         success: true,
         message: '좋아요 취소됨',
-        data: { liked: false },
+        data: { liked: false, totalLikes: post.likedBy.length },
       });
     } else {
       post.likedBy.push(sessionUser.email);
       return HttpResponse.json({
         success: true,
         message: '좋아요 추가됨',
-        data: { liked: true },
+        data: { liked: true, totalLikes: post.likedBy.length },
       });
     }
   } catch (error) {
@@ -244,10 +317,51 @@ const likePostHandler = http.post('api/posts/:id/like', async ({ params }) => {
   }
 });
 
+// ✅ 좋아요 상태 조회 (`GET /api/posts/:id/like`)
+const getLikeStatusHandler = http.get(
+  'api/posts/:id/like',
+  async ({ params }) => {
+    const sessionUser = getSessionUser();
+
+    try {
+      const postId = Number(params.id);
+      const post = posts.find(p => p.postId === postId);
+
+      if (!post) {
+        return HttpResponse.json(
+          { success: false, message: '게시물을 찾을 수 없습니다.' },
+          { status: 404 }
+        );
+      }
+
+      if (!post.likedBy) {
+        post.likedBy = [];
+      }
+
+      const isLiked = sessionUser
+        ? post.likedBy.includes(sessionUser.email)
+        : false;
+
+      return HttpResponse.json({
+        success: true,
+        liked: isLiked,
+        totalLikes: post.likedBy.length,
+      });
+    } catch (error) {
+      return HttpResponse.json(
+        { success: false, message: '좋아요 상태 조회 중 오류 발생' },
+        { status: 500 }
+      );
+    }
+  }
+);
+
 export const postHandlers = [
   getPostsHandler,
+  getPostByIdHandler,
   createPostHandler,
   updatePostHandler,
   deletePostHandler,
   likePostHandler,
+  getLikeStatusHandler,
 ];
