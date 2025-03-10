@@ -31,9 +31,19 @@ const FeedList = ({ posts = [], observerRef, hasMore = true }) => {
         <p className="text-gray-500 text-sm py-4">게시물이 없습니다.</p>
       )}
 
-      <div ref={observerRef} className="text-center text-xs text-gray-400 py-2">
-        {hasMore ? '⏳ 피드 불러오는 중...' : '더 이상 게시물이 없습니다.'}
-      </div>
+      {/* hasMore가 true일 때만 observer 요소 렌더링 */}
+      {hasMore ? (
+        <div
+          ref={observerRef}
+          className="text-center text-xs text-gray-400 py-2"
+        >
+          ⏳ 피드 불러오는 중...
+        </div>
+      ) : (
+        <div className="text-center text-xs text-gray-400 py-2">
+          더 이상 게시물이 없습니다.
+        </div>
+      )}
     </div>
   );
 };

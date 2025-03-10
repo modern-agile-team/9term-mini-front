@@ -27,13 +27,30 @@ const useFetchPosts = () => {
       console.log('📢 [useFetchPosts] 불러온 게시물:', response.data);
 
       if (response.data.length === 0) {
+        console.log('🛑 더 이상 불러올 게시물이 없습니다.');
         setHasMore(false);
+        // Observer 연결 해제
+        if (observerInstance.current) {
+          observerInstance.current.disconnect();
+        }
       } else {
         // ✅ 중복 게시물 필터링
         setPosts(prevPosts => {
           const newPosts = response.data.filter(
             newPost => !prevPosts.some(post => post.postId === newPost.postId)
           );
+
+          // 새로운 게시물이 없으면 더 이상 불러올 데이터가 없는 것으로 간주
+          if (newPosts.length === 0) {
+            console.log('🛑 더 이상 새로운 게시물이 없습니다.');
+            setHasMore(false);
+            // Observer 연결 해제
+            if (observerInstance.current) {
+              observerInstance.current.disconnect();
+            }
+            return prevPosts;
+          }
+
           return [...prevPosts, ...newPosts];
         });
         setPage(prevPage => prevPage + 1);
@@ -41,6 +58,10 @@ const useFetchPosts = () => {
     } catch (error) {
       console.error('❌ 피드 데이터를 불러오는 중 오류 발생:', error);
       setHasMore(false);
+      // Observer 연결 해제
+      if (observerInstance.current) {
+        observerInstance.current.disconnect();
+      }
     } finally {
       setLoading(false);
     }
@@ -58,7 +79,14 @@ const useFetchPosts = () => {
   useEffect(() => {
     const currentObserverRef = observerRef.current;
 
-    if (!currentObserverRef || !hasMore) return;
+    // hasMore가 false면 Observer를 설정하지 않음
+    if (!currentObserverRef || !hasMore) {
+      if (observerInstance.current) {
+        observerInstance.current.disconnect();
+        observerInstance.current = null;
+      }
+      return;
+    }
 
     // 이전 옵저버 정리
     if (observerInstance.current) {
@@ -72,7 +100,7 @@ const useFetchPosts = () => {
           fetchPosts();
         }
       },
-      { threshold: 0.5 }
+      { threshold: 0.1 } // threshold 값을 낮춰 더 빨리 감지하도록 수정
     );
 
     observerInstance.current.observe(currentObserverRef);
@@ -80,6 +108,7 @@ const useFetchPosts = () => {
     return () => {
       if (observerInstance.current) {
         observerInstance.current.disconnect();
+        observerInstance.current = null;
       }
     };
   }, [isLoading, hasMore]);
