@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import apiClient from '@/services/apiClient';
+import usePostStore from '@/store/usePostStore';
 
 const CreatePostModal = ({ onClose, postId, initialData = {} }) => {
   const [dragActive, setDragActive] = useState(false);
@@ -9,6 +10,9 @@ const CreatePostModal = ({ onClose, postId, initialData = {} }) => {
   const [caption, setCaption] = useState(initialData.content || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const inputRef = useRef(null);
+
+  // Zustand 스토어에서 액션 가져오기
+  const { addPost, updatePost } = usePostStore();
 
   // postId가 있을 경우 기존 게시물 불러오기
   useEffect(() => {
@@ -149,11 +153,36 @@ const CreatePostModal = ({ onClose, postId, initialData = {} }) => {
         throw new Error(response.message || '업로드에 실패했습니다.');
       }
 
+      // 게시물 상태 업데이트
+      if (postId) {
+        // 수정된 게시물 정보 업데이트
+        updatePost({
+          postId: postId,
+          content: caption,
+          postImg: selectedImage,
+        });
+        console.log('✅ [CreatePostModal] 게시물 수정 완료:', postId);
+      } else if (response.data && response.data.postId) {
+        // 새 게시물 추가
+        const newPost = {
+          postId: response.data.postId,
+          content: caption,
+          postImg: selectedImage,
+          createdAt: new Date().toISOString(),
+          author:
+            JSON.parse(sessionStorage.getItem('sessionUser'))?.email ||
+            'unknown',
+          likedBy: [],
+        };
+        addPost(newPost);
+        console.log('✅ [CreatePostModal] 새 게시물 추가 완료:', newPost);
+      }
+
       alert(postId ? '게시물이 수정되었습니다.' : '게시물이 업로드되었습니다.');
       onClose();
     } catch (error) {
       console.error('게시물 저장 오류:', error);
-      alert(error.message || '게시물 저장 중 오류가 발생했습니다.');
+      alert(error.message || '게시물 저장에 실패했습니다.');
     } finally {
       setIsSubmitting(false);
     }

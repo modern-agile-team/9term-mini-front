@@ -1,11 +1,20 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import apiClient from '@/services/apiClient';
+import usePostStore from '@/store/usePostStore';
 
 const useFetchPosts = () => {
-  const [posts, setPosts] = useState([]); // ✅ 피드 데이터
-  const [page, setPage] = useState(1);
-  const [isLoading, setLoading] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
+  // Zustand 스토어에서 상태와 액션 가져오기
+  const {
+    posts,
+    isLoading,
+    hasMore,
+    page,
+    setPosts,
+    setLoading,
+    setHasMore,
+    incrementPage,
+  } = usePostStore();
+
   const observerRef = useRef(null);
   const observerInstance = useRef(null);
 
@@ -34,26 +43,24 @@ const useFetchPosts = () => {
           observerInstance.current.disconnect();
         }
       } else {
-        // ✅ 중복 게시물 필터링
-        setPosts(prevPosts => {
-          const newPosts = response.data.filter(
-            newPost => !prevPosts.some(post => post.postId === newPost.postId)
-          );
+        // ✅ 중복 게시물 필터링 및 상태 업데이트
+        const newPosts = response.data.filter(
+          newPost => !posts.some(post => post.postId === newPost.postId)
+        );
 
-          // 새로운 게시물이 없으면 더 이상 불러올 데이터가 없는 것으로 간주
-          if (newPosts.length === 0) {
-            console.log('🛑 더 이상 새로운 게시물이 없습니다.');
-            setHasMore(false);
-            // Observer 연결 해제
-            if (observerInstance.current) {
-              observerInstance.current.disconnect();
-            }
-            return prevPosts;
+        // 새로운 게시물이 없으면 더 이상 불러올 데이터가 없는 것으로 간주
+        if (newPosts.length === 0) {
+          console.log('🛑 더 이상 새로운 게시물이 없습니다.');
+          setHasMore(false);
+          // Observer 연결 해제
+          if (observerInstance.current) {
+            observerInstance.current.disconnect();
           }
-
-          return [...prevPosts, ...newPosts];
-        });
-        setPage(prevPage => prevPage + 1);
+        } else {
+          // 기존 게시물과 새 게시물 합치기
+          setPosts([...posts, ...newPosts]);
+          incrementPage();
+        }
       }
     } catch (error) {
       console.error('❌ 피드 데이터를 불러오는 중 오류 발생:', error);
@@ -69,10 +76,10 @@ const useFetchPosts = () => {
 
   // ✅ 첫 번째 페이지 로드
   useEffect(() => {
-    setPosts([]); // 컴포넌트 마운트 시 게시물 초기화
-    setPage(1); // 페이지 초기화
-    setHasMore(true); // hasMore 초기화
-    fetchPosts();
+    // 컴포넌트 마운트 시 상태 초기화 및 데이터 로드
+    if (posts.length === 0) {
+      fetchPosts();
+    }
   }, []);
 
   // ✅ Intersection Observer를 사용한 무한 스크롤
@@ -111,7 +118,7 @@ const useFetchPosts = () => {
         observerInstance.current = null;
       }
     };
-  }, [isLoading, hasMore]);
+  }, [isLoading, hasMore, posts]);
 
   return { posts, observerRef, isLoading, hasMore };
 };

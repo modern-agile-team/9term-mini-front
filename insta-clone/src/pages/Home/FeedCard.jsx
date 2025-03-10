@@ -7,6 +7,7 @@ import useComments from '@/hooks/useComments';
 import apiClient from '@/services/apiClient';
 import CreatePostModal from '@/pages/Posts/CreatePostModal';
 import useProfileStore from '@/store/useProfileStore';
+import usePostStore from '@/store/usePostStore';
 
 const FeedCard = ({
   postId,
@@ -36,6 +37,7 @@ const FeedCard = ({
       currentUser: user,
     });
   const { profileImages } = useProfileStore();
+  const { deletePost } = usePostStore();
   const [authorProfileImg, setAuthorProfileImg] = useState(null);
 
   const [isEditMode, setIsEditMode] = useState(false);
@@ -126,6 +128,10 @@ const FeedCard = ({
       }
 
       alert('게시물이 삭제되었습니다.');
+
+      // Zustand 스토어에서 게시물 삭제
+      deletePost(postId);
+      console.log('✅ [FeedCard] 게시물 삭제 완료:', postId);
 
       // ✅ 삭제 콜백 함수가 있을 경우 실행
       if (onDelete) onDelete(postId);
