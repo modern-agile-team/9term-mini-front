@@ -168,7 +168,7 @@ const FeedCard = ({
       </div>
 
       {/* 게시물 이미지 */}
-      <img src={postImg} alt="Post" className="w-full rounded-xs" />
+      <img src={postImg} alt="Post" className="w-full pt-2 rounded-xs" />
 
       {/* 게시물 정보 */}
       <div className="mt-2 px-2">
