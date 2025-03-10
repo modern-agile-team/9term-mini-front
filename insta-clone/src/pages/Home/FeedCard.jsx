@@ -8,68 +8,77 @@ import apiClient from '@/services/apiClient';
 import CreatePostModal from '@/pages/Posts/CreatePostModal';
 
 const FeedCard = ({
-  id,
-  userId,
-  email,
-  postImg,
+  postId,
   content,
-  likes = 0,
+  postImg,
+  createdAt,
+  author,
   onDelete,
 }) => {
+  // ✅ postId가 없으면 오류 출력 후 렌더링하지 않음
+  if (!postId) {
+    console.error('❌ [FeedCard] postId가 없습니다!', {
+      postId,
+      author,
+      content,
+    });
+    return null;
+  }
+
   const [postContent, setPostContent] = useState(content);
   const [showComments, setShowComments] = useState(false);
   const { user, isAuthenticated } = useAuth();
-  const { likeCount, isLiked, toggleLike } = useLike(likes, id);
+  const { likeCount, isLiked, toggleLike } = useLike(0, postId);
   const { commentList, addComment, deleteComment, isLoading } = useComments({
-    postId: id,
+    postId,
     currentUser: user,
   });
 
-  // ✅ 수정 모드 상태 추가
   const [isEditMode, setIsEditMode] = useState(false);
 
-  // ✅ 게시물 수정 (모달 열기)
-  const handleEditPost = () => {
-    setIsEditMode(true); // 수정 모드 활성화
-  };
+  // ✅ 게시물 수정 모드 활성화
+  const handleEditPost = () => setIsEditMode(true);
 
-  // ✅ 게시물 삭제
+  // ✅ 게시물 삭제 처리
   const handleDeletePost = async () => {
     if (!window.confirm('정말로 이 게시물을 삭제하시겠습니까?')) return;
 
     try {
-      await apiClient.delete(`api/posts/${id}`);
+      await apiClient.delete(`api/posts/${postId}`);
       alert('게시물이 삭제되었습니다.');
-      onDelete(id);
+
+      // ✅ 삭제 콜백 함수가 있을 경우 실행
+      if (onDelete) onDelete(postId);
     } catch (error) {
+      alert('게시물 삭제에 실패했습니다. 다시 시도해주세요.');
       console.error('게시물 삭제 실패:', error);
     }
   };
 
-  // ✅ 좋아요 토글
+  // ✅ 좋아요 토글 (실패 시 이전 상태 복구)
   const handleLikeToggle = async () => {
     try {
       await toggleLike();
     } catch (error) {
+      alert('좋아요 상태 업데이트에 실패했습니다.');
       console.error('좋아요 상태 업데이트 실패:', error);
     }
   };
 
+  // ✅ 인증되지 않은 사용자는 아무것도 표시하지 않음
   if (!isAuthenticated) return null;
 
   return (
     <div className="p-4 mb-4 bg-white w-full max-w-lg mx-auto">
       {/* 프로필 및 수정/삭제 버튼 */}
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center space-x-2">
-          <img
-            src="/assets/icons/profile.svg"
-            alt="Profile"
-            className="w-8 h-8 rounded-full"
-          />
-          <span className="font-bold text-xs">{email}</span>
-        </div>
-        {user?.id === userId && (
+      <div className="flex items-center space-x-2">
+        <img
+          src={user?.profileImg || '/assets/icons/profile.svg'}
+          alt="Profile"
+          className="w-8 h-8 rounded-full"
+        />
+        <span className="font-bold text-xs">{author}</span>
+        {user?.email === author && (
           <div className="flex space-x-2">
             <button onClick={handleEditPost} className="text-blue-500 text-xs">
               수정
@@ -104,13 +113,13 @@ const FeedCard = ({
         </div>
         <p className="text-sm font-bold">좋아요 {likeCount}개</p>
         <p className="text-sm mt-1">
-          <span className="font-bold">{email}</span> {postContent}
+          <span className="font-bold">{author}</span> {postContent}
         </p>
         <p
           className="text-xs text-gray-500 mt-1 cursor-pointer"
           onClick={() => setShowComments(!showComments)}
         >
-          댓글 {commentList.length}개 모두보기
+          댓글 {commentList?.length || 0}개 모두보기
         </p>
 
         {/* 댓글 리스트 & 입력창 */}
@@ -120,22 +129,22 @@ const FeedCard = ({
               <p>댓글 불러오는 중...</p>
             ) : (
               <CommentList
-                postId={id}
+                postId={postId}
                 currentUser={user}
                 onDeleteComment={deleteComment}
               />
             )}
-            <CommentInput postId={id} />
+            <CommentInput postId={postId} />
           </>
         )}
       </div>
 
-      {/* ✅ 게시물 수정 모달 */}
+      {/* 게시물 수정 모달 */}
       {isEditMode && (
         <CreatePostModal
           onClose={() => setIsEditMode(false)}
-          postId={id} // ✅ postId 전달
-          initialData={{ postImg, content: postContent }} // ✅ 기존 데이터 전달
+          postId={postId}
+          initialData={{ postImg, content: postContent }}
         />
       )}
     </div>

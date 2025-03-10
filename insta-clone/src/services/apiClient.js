@@ -1,19 +1,30 @@
 import ky from 'ky';
 
 const apiClient = ky.create({
-  prefixUrl: 'https://api.modonggu.site/', // ✅ 백엔드 API 주소
-  // prefixUrl: 'https://43.202.196.220:3000/',
-  // prefixUrl: '',
+  prefixUrl: '',
   headers: {
     'Content-Type': 'application/json',
   },
-  credentials: 'include', // ✅ 세션 쿠키 포함 (withCredentials 대체)
+  credentials: 'include',
   hooks: {
+    beforeRequest: [
+      request => {
+        const token = sessionStorage.getItem('token'); // ✅ 토큰 가져오기
+        if (token) {
+          request.headers.set('Authorization', `Bearer ${token}`);
+        }
+      },
+    ],
     afterResponse: [
       async (_request, _options, response) => {
         if (response.status === 401) {
-          console.error('인증 오류: 로그인 필요');
+          console.error('❌ 인증 오류: 로그인 필요');
         }
+        if (response.ok) {
+          const resJson = await response.json();
+          return resJson.data || resJson;
+        }
+        return response;
       },
     ],
   },

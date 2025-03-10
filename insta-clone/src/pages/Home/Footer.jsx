@@ -2,13 +2,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import useAuth from '@/hooks/useAuth';
 
 const Footer = () => {
-  const { logout } = useAuth(); // ✅ 로그아웃 함수 가져오기
+  const { logout } = useAuth();
   const navigate = useNavigate();
 
-  // ✅ 로그아웃 핸들러
   const handleLogout = async () => {
-    await logout(); // 로그아웃 실행
-    navigate('/login'); // 로그인 페이지로 이동
+    await logout();
+    navigate('/login', { replace: true }); // ✅ 뒤로가기 방지
   };
 
   return (

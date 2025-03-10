@@ -1,137 +1,184 @@
 import { http, HttpResponse } from 'msw';
 
-let posts = [
+// 댓글 저장소
+let comments = [
   {
     id: 1,
-    userId: 1,
-    email: 'af@naver.com',
-    postImg:
-      'https://cdn.news.hidoc.co.kr/news/photo/202104/24409_58461_0826.jpg',
-    content: '여행왔슈',
-    likes: 10,
-    likedBy: [],
-    createdAt: new Date().toISOString(),
-    comments: [
-      { id: 1, email: 'user3@a.com', text: '멋진 사진이네요!' },
-      { id: 2, email: 'user5@a.com', text: '어디로 여행 가셨나요?' },
-    ],
+    postId: 1,
+    userId: 'user1@gmail.com',
+    comment: '파스타가 정말 맛있어 보여요! 어디 맛집인가요?',
+    createdAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30분 전
+    updatedAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
   },
   {
     id: 2,
-    userId: 2,
-    email: 'user2@example.com',
-    postImg:
-      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTmMPQb8IJeXeHn_Fxj8HN19mDbRKEFCmCjwQ&s',
-    content: '냐옹이',
-    likes: 5,
-    likedBy: [],
-    createdAt: new Date().toISOString(),
-    comments: [
-      { id: 1, email: 'user6@a.com', text: '귀엽군' },
-      { id: 2, email: 'user4@a.com', text: '이름이 뭐야옹?' },
-    ],
+    postId: 1,
+    userId: 'admin@naver.com',
+    comment: '강남 파스타 맛집이에요~ 다음에 같이 가요!',
+    createdAt: new Date(Date.now() - 15 * 60 * 1000).toISOString(), // 15분 전
+    updatedAt: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 3,
+    postId: 2,
+    userId: 'user1@gmail.com',
+    comment: '분위기 좋은 카페네요 ✨',
+    createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(), // 12시간 전
+    updatedAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 4,
+    postId: 3,
+    userId: 'admin@naver.com',
+    comment: '벚꽃이 너무 예쁘네요! 어디인가요?',
+    createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1일 전
+    updatedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
   },
 ];
 
+// 세션에서 사용자 가져오기
 const getSessionUser = () => {
   const session = sessionStorage.getItem('sessionUser');
   return session ? JSON.parse(session) : null;
 };
 
-// ✅ 댓글 목록 조회 (`GET /api/posts/:id/comments`)
+// ✅ 특정 게시물의 댓글 목록 조회
 const getCommentsHandler = http.get(
-  'api/posts/:id/comments',
+  'api/posts/:postId/comments',
   async ({ params }) => {
-    const postId = Number(params.id);
-    const post = posts.find(p => p.id === postId);
-
-    if (!post) {
-      return HttpResponse.json(
-        { error: '게시물을 찾을 수 없습니다.' },
-        { status: 404 }
-      );
-    }
-
-    return HttpResponse.json(post.comments);
-  }
-);
-
-// ✅ 댓글 추가 (`POST /api/posts/:id/comments`)
-const addCommentHandler = http.post(
-  'api/posts/:id/comments',
-  async ({ request, params }) => {
-    const loggedInUser = getSessionUser();
-    if (!loggedInUser) {
-      return HttpResponse.json(
-        { error: '로그인이 필요합니다.' },
-        { status: 401 }
-      );
-    }
-
-    const postId = Number(params.id);
-    const post = posts.find(p => p.id === postId);
-
-    if (!post) {
-      return HttpResponse.json(
-        { error: '게시물을 찾을 수 없습니다.' },
-        { status: 404 }
-      );
-    }
-
-    const newComment = await request.json();
-    const newId = Math.max(...post.comments.map(c => c.id), 0) + 1;
-
-    const comment = {
-      id: newId,
-      email: loggedInUser.email,
-      text: newComment.text,
-    };
-
-    post.comments.push(comment);
-    return HttpResponse.json(comment, { status: 201 });
-  }
-);
-
-// ✅ 댓글 삭제 (`DELETE /api/comments/:id`)
-const deleteCommentHandler = http.delete(
-  'api/comments/:id',
-  async ({ params }) => {
-    const loggedInUser = getSessionUser();
-    if (!loggedInUser) {
-      return HttpResponse.json(
-        { error: '로그인이 필요합니다.' },
-        { status: 401 }
-      );
-    }
-
-    for (const post of posts) {
-      const commentIndex = post.comments.findIndex(
-        c => c.id === Number(params.id)
-      );
-
-      if (commentIndex !== -1) {
-        if (post.comments[commentIndex].email !== loggedInUser.email) {
-          return HttpResponse.json(
-            { error: '삭제 권한이 없습니다.' },
-            { status: 403 }
-          );
-        }
-
-        post.comments.splice(commentIndex, 1);
-        return HttpResponse.json({ success: true, msg: '댓글 삭제 완료' });
+    try {
+      if (!params.postId) {
+        return HttpResponse.json(
+          { success: false, message: '게시물 ID가 필요합니다.' },
+          { status: 400 }
+        );
       }
-    }
 
-    return HttpResponse.json(
-      { error: '댓글을 찾을 수 없습니다.' },
-      { status: 404 }
-    );
+      const postId = Number(params.postId);
+      const postComments = comments.filter(c => c.postId === postId);
+
+      // 댓글이 없어도 빈 배열 반환
+      return HttpResponse.json({
+        success: true,
+        message: '댓글 조회 성공',
+        data: postComments,
+      });
+    } catch (error) {
+      return HttpResponse.json(
+        { success: false, message: '서버 오류가 발생했습니다.' },
+        { status: 500 }
+      );
+    }
   }
 );
 
-// ✅ 핸들러 배열 내보내기
+// ✅ 댓글 생성
+const createCommentHandler = http.post(
+  'api/posts/:postId/comments',
+  async ({ request, params }) => {
+    const sessionUser = getSessionUser();
+    if (!sessionUser) {
+      return HttpResponse.json(
+        { success: false, message: '로그인이 필요합니다.' },
+        { status: 401 }
+      );
+    }
+
+    try {
+      const postId = Number(params.postId);
+      const { comment } = await request.json();
+
+      if (!postId || !comment) {
+        return HttpResponse.json(
+          {
+            success: false,
+            message: '게시물 ID와 댓글 내용은 필수입니다.',
+          },
+          { status: 400 }
+        );
+      }
+
+      const newComment = {
+        id: comments.length + 1,
+        postId,
+        userId: sessionUser.email,
+        comment,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      comments.push(newComment);
+
+      return HttpResponse.json(
+        {
+          success: true,
+          message: '댓글이 성공적으로 생성되었습니다.',
+          data: newComment,
+        },
+        { status: 201 }
+      );
+    } catch (error) {
+      return HttpResponse.json(
+        { success: false, message: '서버 오류가 발생했습니다.' },
+        { status: 500 }
+      );
+    }
+  }
+);
+
+// ✅ 댓글 삭제
+const deleteCommentHandler = http.delete(
+  'api/posts/:postId/comments/:commentId',
+  async ({ params }) => {
+    const sessionUser = getSessionUser();
+    if (!sessionUser) {
+      return HttpResponse.json(
+        { success: false, message: '로그인이 필요합니다.' },
+        { status: 401 }
+      );
+    }
+
+    try {
+      const commentId = Number(params.commentId);
+      if (!commentId) {
+        return HttpResponse.json(
+          { success: false, message: '댓글 ID가 필요합니다.' },
+          { status: 400 }
+        );
+      }
+
+      const commentIndex = comments.findIndex(c => c.id === commentId);
+      if (commentIndex === -1) {
+        return HttpResponse.json(
+          { success: false, message: '댓글을 찾을 수 없습니다.' },
+          { status: 404 }
+        );
+      }
+
+      if (comments[commentIndex].userId !== sessionUser.email) {
+        return HttpResponse.json(
+          { success: false, message: '댓글 삭제 권한이 없습니다.' },
+          { status: 403 }
+        );
+      }
+
+      comments.splice(commentIndex, 1);
+
+      return HttpResponse.json({
+        success: true,
+        message: '댓글이 성공적으로 삭제되었습니다.',
+      });
+    } catch (error) {
+      return HttpResponse.json(
+        { success: false, message: '서버 오류가 발생했습니다.' },
+        { status: 500 }
+      );
+    }
+  }
+);
+
 export const commentHandlers = [
   getCommentsHandler,
-  addCommentHandler,
+  createCommentHandler,
   deleteCommentHandler,
 ];

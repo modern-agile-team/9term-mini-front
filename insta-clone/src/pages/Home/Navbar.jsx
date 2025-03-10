@@ -1,12 +1,35 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import CreatePostModal from '@/pages/Posts/CreatePostModal';
 import ProfileModal from '@/pages/Auth/ProfileModal';
 import useProfileStore from '@/store/useProfileStore';
+import apiClient from '@/services/apiClient';
 
 const Navbar = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-  const { profileImage } = useProfileStore();
+  const { profileImages, setProfileImage } = useProfileStore();
+  const [userId, setUserId] = useState(null);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await apiClient.get('api/users/me');
+        const data = await response.json();
+
+        if (data?.success && data.data?.[0]) {
+          const userData = data.data[0];
+          setUserId(userData.id);
+          if (userData.profileImg) {
+            setProfileImage(userData.id, userData.profileImg);
+          }
+        }
+      } catch (error) {
+        console.error('사용자 정보 로딩 실패:', error);
+      }
+    };
+
+    fetchUserData();
+  }, [setProfileImage]);
 
   return (
     <>
@@ -32,9 +55,9 @@ const Navbar = () => {
             onClick={() => setIsProfileModalOpen(true)}
           >
             <div className="w-7 h-7 rounded-full overflow-hidden">
-              {profileImage ? (
+              {userId && profileImages[userId] ? (
                 <img
-                  src={profileImage}
+                  src={profileImages[userId]}
                   alt="Profile"
                   className="w-full h-full object-cover"
                 />

@@ -7,6 +7,7 @@ const CreatePostModal = ({ onClose, postId, initialData = {} }) => {
     initialData.postImg || null
   );
   const [caption, setCaption] = useState(initialData.content || '');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const inputRef = useRef(null);
 
   // postId가 있을 경우 기존 게시물 불러오기
@@ -15,12 +16,15 @@ const CreatePostModal = ({ onClose, postId, initialData = {} }) => {
       const fetchPost = async () => {
         try {
           const response = await apiClient.get(`api/posts/${postId}`).json();
-          if (!response) throw new Error('게시물을 불러올 수 없습니다.');
+          if (!response.success) {
+            throw new Error(response.message || '게시물을 불러올 수 없습니다.');
+          }
 
-          setSelectedImage(response.postImg);
-          setCaption(response.content);
+          setSelectedImage(response.data.postImg);
+          setCaption(response.data.content);
         } catch (error) {
           console.error('게시물 불러오기 오류:', error);
+          alert(error.message);
         }
       };
       fetchPost();
@@ -59,7 +63,13 @@ const CreatePostModal = ({ onClose, postId, initialData = {} }) => {
 
   // 새 게시물 업로드 또는 수정
   const handleUpload = async () => {
-    if (!selectedImage) return;
+    if (!selectedImage) {
+      alert('이미지를 선택해주세요.');
+      return;
+    }
+
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
     try {
       let response;
@@ -77,12 +87,17 @@ const CreatePostModal = ({ onClose, postId, initialData = {} }) => {
           .json();
       }
 
-      if (!response.ok) throw new Error('업로드 실패');
+      if (!response.success) {
+        throw new Error(response.message || '업로드에 실패했습니다.');
+      }
 
       alert(postId ? '게시물이 수정되었습니다.' : '게시물이 업로드되었습니다.');
       onClose();
     } catch (error) {
       console.error('게시물 저장 오류:', error);
+      alert(error.message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -123,9 +138,14 @@ const CreatePostModal = ({ onClose, postId, initialData = {} }) => {
           {selectedImage && (
             <button
               onClick={handleUpload}
-              className="absolute right-3 text-sm font-medium text-[#0095F6] hover:text-[#1877F2] cursor-pointer transition-colors"
+              disabled={isSubmitting}
+              className={`absolute right-3 text-sm font-medium ${
+                isSubmitting
+                  ? 'text-gray-400 cursor-not-allowed'
+                  : 'text-[#0095F6] hover:text-[#1877F2] cursor-pointer'
+              } transition-colors`}
             >
-              {postId ? '수정하기' : '공유하기'}
+              {isSubmitting ? '처리 중...' : postId ? '수정하기' : '공유하기'}
             </button>
           )}
         </div>
@@ -140,7 +160,9 @@ const CreatePostModal = ({ onClose, postId, initialData = {} }) => {
           onDrop={handleDrop}
         >
           <div
-            className={`flex ${selectedImage ? 'flex-col' : ''} transition-colors duration-200`}
+            className={`flex ${
+              selectedImage ? 'flex-col' : ''
+            } transition-colors duration-200`}
           >
             {selectedImage ? (
               <>
@@ -152,12 +174,12 @@ const CreatePostModal = ({ onClose, postId, initialData = {} }) => {
                   />
                 </div>
                 {/* 글쓰기 영역 */}
-                <div className="w-full mt-2">
+                <div className="w-full mt-2 px-4">
                   <textarea
                     value={caption}
                     onChange={e => setCaption(e.target.value)}
                     placeholder="문구 입력..."
-                    className="w-full h-25 resize-none
+                    className="w-full h-25 resize-none p-2
                     bg-[#fafafa]
                     border border-gray-300 rounded-sm focus:outline-none
                     focus:border-gray-400
@@ -172,7 +194,7 @@ const CreatePostModal = ({ onClose, postId, initialData = {} }) => {
             ) : (
               <div className="text-center flex-col justify-center items-center px-4 py-20">
                 <div className="mx-auto mb-6 flex flex-col justify-center items-center">
-                  <img src="/assets/icons/photo.svg" />
+                  <img src="/assets/icons/photo.svg" alt="Upload" />
                 </div>
                 <h3 className="text-lg mb-4">
                   {dragActive

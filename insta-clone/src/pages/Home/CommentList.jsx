@@ -7,15 +7,12 @@ const CommentList = ({ postId, currentUser }) => {
     <div className="mt-2">
       {commentList?.length > 0 ? (
         commentList.map(comment => (
-          <div
-            key={`${comment.id}-${comment.text}`}
-            className="flex justify-between items-center"
-          >
+          <div key={comment.id} className="flex justify-between items-center">
             <p className="text-sm">
-              <span className="font-bold">{comment.email}</span>&nbsp;
-              {comment.text}
+              <span className="font-bold">{comment.userId}</span>&nbsp;
+              {comment.comment}
             </p>
-            {currentUser.email === comment.email && (
+            {currentUser?.email === comment.userId && (
               <button
                 className="text-red-500 text-xs ml-2"
                 onClick={() => deleteComment(comment.id)}
