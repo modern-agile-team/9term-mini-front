@@ -6,6 +6,7 @@ import useLike from '@/hooks/useLike';
 import useComments from '@/hooks/useComments';
 import apiClient from '@/services/apiClient';
 import CreatePostModal from '@/pages/Posts/CreatePostModal';
+import useProfileStore from '@/store/useProfileStore';
 
 const FeedCard = ({
   postId,
@@ -34,6 +35,8 @@ const FeedCard = ({
       postId,
       currentUser: user,
     });
+  const { profileImages } = useProfileStore();
+  const [authorProfileImg, setAuthorProfileImg] = useState(null);
 
   const [isEditMode, setIsEditMode] = useState(false);
 
@@ -43,6 +46,32 @@ const FeedCard = ({
       fetchComments();
     }
   }, [showComments]);
+
+  // ✅ 작성자의 프로필 이미지 가져오기
+  useEffect(() => {
+    const fetchAuthorProfile = async () => {
+      try {
+        // 현재 로그인한 사용자가 작성자인 경우
+        if (user && user.email === author) {
+          setAuthorProfileImg(user.profileImg);
+          return;
+        }
+
+        // 작성자가 현재 로그인한 사용자가 아닌 경우, 백엔드에서 작성자 정보 가져오기
+        const response = await apiClient
+          .get(`api/users/profile/${author}`, { throwHttpErrors: false })
+          .json();
+
+        if (response.success && response.data) {
+          setAuthorProfileImg(response.data.profileImg);
+        }
+      } catch (error) {
+        console.error('작성자 프로필 이미지 가져오기 실패:', error);
+      }
+    };
+
+    fetchAuthorProfile();
+  }, [author, user, profileImages]);
 
   // ✅ 게시물 수정 모드 활성화
   const handleEditPost = () => setIsEditMode(true);
@@ -81,9 +110,9 @@ const FeedCard = ({
       {/* 프로필 및 수정/삭제 버튼 */}
       <div className="flex items-center space-x-2">
         <img
-          src={user?.profileImg || '/assets/icons/profile.svg'}
+          src={authorProfileImg || '/assets/icons/profile.svg'}
           alt="Profile"
-          className="w-8 h-8 rounded-full"
+          className="w-8 h-8 rounded-full object-cover"
         />
         <span className="font-bold text-xs">{author}</span>
         {user?.email === author && (

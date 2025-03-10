@@ -190,20 +190,38 @@ const logoutHandler = http.post('api/logout', async () => {
 // ✅ 프로필 이미지 수정
 const profileHandler = http.patch('api/users/me', async ({ request }) => {
   try {
+    console.log('🔒 [MSW] 프로필 이미지 수정 요청 받음');
     const sessionUser = sessionStorage.getItem('sessionUser');
     if (!sessionUser) {
+      console.log('❌ [MSW] 프로필 이미지 수정 실패: 로그인 필요');
       return HttpResponse.json(
         { success: false, message: '로그인이 필요합니다.' },
         { status: 401 }
       );
     }
 
-    const { profileImg } = await request.json();
+    const reqBody = await request.json();
+    console.log('🔒 [MSW] 프로필 이미지 수정 요청 바디:', {
+      hasProfileImg: !!reqBody.profileImg,
+      profileImgLength: reqBody.profileImg?.length,
+    });
+
+    const { profileImg } = reqBody;
     const user = JSON.parse(sessionUser);
+
+    // 사용자 객체 업데이트
     user.profileImg = profileImg;
+
+    // users 배열에서 해당 사용자 업데이트
+    const userIndex = users.findIndex(u => u.id === user.id);
+    if (userIndex !== -1) {
+      users[userIndex].profileImg = profileImg;
+      console.log('✅ [MSW] users 배열 업데이트 성공:', users[userIndex].email);
+    }
 
     // 세션 스토리지 업데이트
     sessionStorage.setItem('sessionUser', JSON.stringify(user));
+    console.log('✅ [MSW] 세션 스토리지 업데이트 성공');
 
     return HttpResponse.json({
       success: true,
@@ -214,6 +232,7 @@ const profileHandler = http.patch('api/users/me', async ({ request }) => {
       },
     });
   } catch (error) {
+    console.error('❌ [MSW] 프로필 이미지 수정 중 오류:', error);
     return HttpResponse.json(
       { success: false, message: '서버 오류가 발생했습니다.' },
       { status: 500 }
@@ -224,8 +243,10 @@ const profileHandler = http.patch('api/users/me', async ({ request }) => {
 // ✅ 프로필 이미지 삭제
 const profileDeleteHandler = http.delete('api/users/me', async () => {
   try {
+    console.log('🔒 [MSW] 프로필 이미지 삭제 요청 받음');
     const sessionUser = sessionStorage.getItem('sessionUser');
     if (!sessionUser) {
+      console.log('❌ [MSW] 프로필 이미지 삭제 실패: 로그인 필요');
       return HttpResponse.json(
         { success: false, message: '로그인이 필요합니다.' },
         { status: 401 }
@@ -234,6 +255,7 @@ const profileDeleteHandler = http.delete('api/users/me', async () => {
 
     const user = JSON.parse(sessionUser);
     if (!user.profileImg) {
+      console.log('❌ [MSW] 프로필 이미지 삭제 실패: 이미지 없음');
       return HttpResponse.json(
         {
           success: false,
@@ -243,14 +265,30 @@ const profileDeleteHandler = http.delete('api/users/me', async () => {
       );
     }
 
+    // 사용자 객체 업데이트
     user.profileImg = null;
+
+    // users 배열에서 해당 사용자 업데이트
+    const userIndex = users.findIndex(u => u.id === user.id);
+    if (userIndex !== -1) {
+      users[userIndex].profileImg = null;
+      console.log('✅ [MSW] users 배열 업데이트 성공:', users[userIndex].email);
+    }
+
+    // 세션 스토리지 업데이트
     sessionStorage.setItem('sessionUser', JSON.stringify(user));
+    console.log('✅ [MSW] 세션 스토리지 업데이트 성공');
 
     return HttpResponse.json({
       success: true,
-      message: '프로필 이미지가 성공적으로 업데이트되었습니다.',
+      message: '프로필 이미지가 성공적으로 삭제되었습니다.',
+      data: {
+        userEmail: user.email,
+        profileImg: null,
+      },
     });
   } catch (error) {
+    console.error('❌ [MSW] 프로필 이미지 삭제 중 오류:', error);
     return HttpResponse.json(
       { success: false, message: '서버 오류가 발생했습니다.' },
       { status: 500 }
@@ -306,6 +344,42 @@ const checkAuthHandler = http.get('api/users/me', async ({ request }) => {
   }
 });
 
+// ✅ 특정 사용자의 프로필 정보 조회
+const getUserProfileHandler = http.get(
+  'api/users/profile/:email',
+  async ({ params }) => {
+    try {
+      const { email } = params;
+
+      // 사용자 찾기
+      const user = users.find(u => u.email === email);
+
+      if (!user) {
+        return HttpResponse.json(
+          { success: false, message: '사용자를 찾을 수 없습니다.' },
+          { status: 404 }
+        );
+      }
+
+      return HttpResponse.json({
+        success: true,
+        message: '사용자 프로필 정보 조회 성공',
+        data: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          profileImg: user.profileImg,
+        },
+      });
+    } catch (error) {
+      return HttpResponse.json(
+        { success: false, message: '서버 오류가 발생했습니다.' },
+        { status: 500 }
+      );
+    }
+  }
+);
+
 export const authHandlers = [
   registerHandler,
   loginHandler,
@@ -314,4 +388,5 @@ export const authHandlers = [
   profileHandler,
   profileDeleteHandler,
   checkAuthHandler,
+  getUserProfileHandler,
 ];

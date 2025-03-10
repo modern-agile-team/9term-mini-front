@@ -18,11 +18,9 @@ function useAuth() {
     isCheckingRef.current = true;
 
     try {
-      console.log('🔍 인증 상태 확인 중...');
       const sessionUser = getSessionUser();
 
       if (sessionUser) {
-        console.log('✅ 세션에서 사용자 정보 확인됨:', sessionUser);
         setUser(sessionUser);
         setIsAuthenticated(true);
         return;
@@ -33,7 +31,6 @@ function useAuth() {
         .json();
 
       if (response.success && response.data) {
-        console.log('✅ 서버에서 사용자 정보 업데이트됨:', response.data[0]);
         const userData = response.data[0];
         sessionStorage.setItem('sessionUser', JSON.stringify(userData));
 
@@ -44,7 +41,6 @@ function useAuth() {
         setIsAuthenticated(false);
       }
     } catch (error) {
-      console.error('❌ 인증 상태 확인 실패:', error);
       setUser(null);
       setIsAuthenticated(false);
     } finally {
@@ -66,7 +62,6 @@ function useAuth() {
   // 저장소 변경 이벤트 리스너
   useEffect(() => {
     const handleStorageChange = () => {
-      console.log('🔄 세션 스토리지 변경 감지됨');
       checkAuth();
     };
 
@@ -78,18 +73,14 @@ function useAuth() {
 
   const login = async (email, pwd) => {
     try {
-      console.log('📤 로그인 요청 전송:', { email, pwd });
       const response = await apiClient
         .post('api/login', {
           json: { email, pwd },
-          throwHttpErrors: false, // 401 에러가 발생해도 예외를 던지지 않도록 설정
+          throwHttpErrors: false,
         })
         .json();
 
-      console.log('📥 로그인 응답 수신:', response);
-
       if (response.success && response.data) {
-        console.log('✅ 로그인 성공:', response.data.user);
         sessionStorage.setItem(
           'sessionUser',
           JSON.stringify(response.data.user)
@@ -97,6 +88,13 @@ function useAuth() {
 
         setUser(response.data.user);
         setIsAuthenticated(true);
+
+        window.dispatchEvent(
+          new CustomEvent('auth:login', {
+            detail: { user: response.data.user },
+          })
+        );
+
         return true;
       } else {
         const errorMessage = response.messages
@@ -105,7 +103,6 @@ function useAuth() {
         throw new Error(errorMessage);
       }
     } catch (error) {
-      console.error('❌ 로그인 실패:', error);
       setUser(null);
       setIsAuthenticated(false);
       throw error;
@@ -119,7 +116,7 @@ function useAuth() {
       setUser(null);
       setIsAuthenticated(false);
     } catch (error) {
-      console.error('❌ 로그아웃 실패:', error);
+      console.error('로그아웃 실패:', error);
     }
   };
 
