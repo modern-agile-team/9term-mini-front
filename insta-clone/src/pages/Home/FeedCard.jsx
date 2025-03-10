@@ -71,7 +71,27 @@ const FeedCard = ({
     };
 
     fetchAuthorProfile();
-  }, [author, user, profileImages]);
+  }, [author, user]);
+
+  // ✅ 프로필 이미지 업데이트 이벤트 리스너
+  useEffect(() => {
+    const handleProfileUpdate = event => {
+      // 현재 로그인한 사용자가 작성자인 경우에만 프로필 이미지 업데이트
+      if (user && user.email === author) {
+        setAuthorProfileImg(event.detail.profileImg);
+        console.log(
+          '✅ [FeedCard] 프로필 이미지 업데이트:',
+          event.detail.profileImg
+        );
+      }
+    };
+
+    window.addEventListener('profile:updated', handleProfileUpdate);
+
+    return () => {
+      window.removeEventListener('profile:updated', handleProfileUpdate);
+    };
+  }, [author, user]);
 
   // ✅ 게시물 수정 모드 활성화
   const handleEditPost = () => setIsEditMode(true);

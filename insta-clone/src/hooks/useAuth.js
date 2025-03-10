@@ -59,6 +59,35 @@ function useAuth() {
     }
   }, [getSessionUser, checkAuth]);
 
+  // 프로필 이미지 업데이트 이벤트 리스너
+  useEffect(() => {
+    const handleProfileUpdate = event => {
+      if (event.detail && user) {
+        // 세션 스토리지에서 사용자 정보 업데이트
+        const sessionUser = getSessionUser();
+        if (sessionUser) {
+          // profileImg가 null인 경우도 처리
+          sessionUser.profileImg = event.detail.profileImg;
+          sessionStorage.setItem('sessionUser', JSON.stringify(sessionUser));
+
+          // 사용자 상태 즉시 업데이트
+          setUser({ ...sessionUser });
+
+          // 디버깅 로그
+          console.log(
+            '✅ [useAuth] 프로필 이미지 업데이트:',
+            event.detail.profileImg
+          );
+        }
+      }
+    };
+
+    window.addEventListener('profile:updated', handleProfileUpdate);
+    return () => {
+      window.removeEventListener('profile:updated', handleProfileUpdate);
+    };
+  }, [user, getSessionUser]);
+
   // 저장소 변경 이벤트 리스너
   useEffect(() => {
     const handleStorageChange = () => {

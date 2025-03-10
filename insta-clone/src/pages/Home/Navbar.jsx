@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import CreatePostModal from '@/pages/Posts/CreatePostModal';
 import ProfileModal from '@/pages/Auth/ProfileModal';
 import useProfileStore from '@/store/useProfileStore';
@@ -9,41 +9,9 @@ const Navbar = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const { profileImages, setProfileImage } = useProfileStore();
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
   const [userId, setUserId] = useState(null);
-  const [refreshKey, setRefreshKey] = useState(0); // 강제 리렌더링을 위한 키
-
-  // 사용자 정보 새로고침 함수
-  const refreshUserData = useCallback(async () => {
-    try {
-      // 세션 스토리지에서 최신 사용자 정보 가져오기
-      const sessionUser = sessionStorage.getItem('sessionUser');
-      if (sessionUser) {
-        try {
-          const userData = JSON.parse(sessionUser);
-          console.log(
-            '✅ [Navbar] 세션 스토리지 사용자 정보 새로고침:',
-            userData
-          );
-          setUserId(userData.id);
-
-          // 프로필 이미지가 있으면 설정, 없으면 null로 설정
-          if (userData.profileImg) {
-            setProfileImage(userData.id, userData.profileImg);
-          } else {
-            setProfileImage(userData.id, null);
-          }
-
-          // 강제 리렌더링
-          setRefreshKey(prev => prev + 1);
-        } catch (error) {
-          console.error('세션 스토리지 파싱 실패:', error);
-        }
-      }
-    } catch (error) {
-      console.error('사용자 정보 새로고침 실패:', error);
-    }
-  }, [setProfileImage]);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // 사용자 정보 및 프로필 이미지 가져오기
   useEffect(() => {
@@ -51,7 +19,6 @@ const Navbar = () => {
       try {
         // useAuth에서 이미 사용자 정보를 가져왔다면 그것을 사용
         if (user) {
-          console.log('✅ [Navbar] 사용자 정보 (useAuth):', user);
           setUserId(user.id);
           if (user.profileImg) {
             setProfileImage(user.id, user.profileImg);
@@ -62,12 +29,10 @@ const Navbar = () => {
         }
 
         // 그렇지 않으면 API 호출
-        const response = await apiClient.get('api/users/me');
-        const data = await response.json();
-        console.log('✅ [Navbar] 사용자 정보 (API):', data);
+        const response = await apiClient.get('api/users/me').json();
 
-        if (data?.success && data.data?.[0]) {
-          const userData = data.data[0];
+        if (response?.success && response.data?.[0]) {
+          const userData = response.data[0];
           setUserId(userData.id);
           if (userData.profileImg) {
             setProfileImage(userData.id, userData.profileImg);
@@ -81,13 +46,39 @@ const Navbar = () => {
     };
 
     fetchUserData();
-  }, [user, setProfileImage, refreshKey]); // refreshKey 의존성 추가
+  }, [user, setProfileImage, refreshKey]);
+
+  // 프로필 이미지 업데이트 이벤트 리스너
+  useEffect(() => {
+    const handleProfileUpdate = event => {
+      // 이벤트에서 프로필 이미지 데이터 가져오기
+      if (event.detail && user) {
+        // 프로필 이미지 상태 직접 업데이트 (null인 경우도 처리)
+        setProfileImage(user.id, event.detail.profileImg);
+
+        // 사용자 정보 직접 업데이트
+        if (user) {
+          setUser({
+            ...user,
+            profileImg: event.detail.profileImg,
+          });
+        }
+      }
+      // 강제 리렌더링
+      setRefreshKey(prev => prev + 1);
+    };
+
+    window.addEventListener('profile:updated', handleProfileUpdate);
+
+    return () => {
+      window.removeEventListener('profile:updated', handleProfileUpdate);
+    };
+  }, [user, setProfileImage, setUser]);
 
   // 프로필 모달이 닫힐 때 사용자 정보 다시 가져오기
   const handleProfileModalClose = () => {
     setIsProfileModalOpen(false);
-    // 사용자 정보 새로고침
-    refreshUserData();
+    setRefreshKey(prev => prev + 1);
   };
 
   // 현재 프로필 이미지 확인
@@ -131,7 +122,7 @@ const Navbar = () => {
           >
             <div className="w-7 h-7 rounded-full overflow-hidden">
               <img
-                key={refreshKey} // 강제 리렌더링을 위한 키
+                key={refreshKey}
                 src={currentProfileImage}
                 alt="Profile"
                 className="w-full h-full object-cover"
