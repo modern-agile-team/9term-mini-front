@@ -1,8 +1,9 @@
-import useComments from '@/hooks/useComments';
-
-const CommentList = ({ postId, currentUser }) => {
-  const { commentList, deleteComment } = useComments({ postId, currentUser });
-
+const CommentList = ({
+  postId,
+  currentUser,
+  commentList = [],
+  onDeleteComment,
+}) => {
   return (
     <div className="mt-2">
       {commentList?.length > 0 ? (
@@ -15,7 +16,7 @@ const CommentList = ({ postId, currentUser }) => {
             {currentUser?.email === comment.userId && (
               <button
                 className="text-red-500 text-xs ml-2"
-                onClick={() => deleteComment(comment.id)}
+                onClick={() => onDeleteComment(comment.id)}
               >
                 삭제
               </button>

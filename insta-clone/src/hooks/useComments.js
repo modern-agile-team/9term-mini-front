@@ -11,6 +11,7 @@ const useComments = ({ postId } = {}) => {
       addComment: () => {},
       deleteComment: () => {},
       isLoading: false,
+      fetchComments: () => {},
     };
   }
 
@@ -62,18 +63,29 @@ const useComments = ({ postId } = {}) => {
         .json();
 
       if (response.success) {
+        // 세션 스토리지에서 사용자 정보 가져오기
+        const sessionUserStr = sessionStorage.getItem('sessionUser');
+        const sessionUser = sessionUserStr ? JSON.parse(sessionUserStr) : null;
+
         const newCommentData = {
           id: response.data.id,
           postId,
           userId:
             response.data.userId ||
-            sessionStorage.getItem('sessionUser')?.email,
+            (sessionUser ? sessionUser.email : 'unknown'),
           comment: newComment,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
+
+        console.log('✅ 새 댓글 데이터:', newCommentData);
+
+        // 댓글 목록에 새 댓글 추가
         setCommentList(prev => [...prev, newCommentData]);
         console.log(`✅ 댓글 추가 성공 (ID: ${response.data.id})`);
+
+        // 댓글 목록 다시 불러오기
+        await fetchComments();
       } else {
         console.warn('⚠️ [useComments] 댓글 추가 실패:', response.message);
       }
@@ -102,7 +114,7 @@ const useComments = ({ postId } = {}) => {
     }
   };
 
-  return { commentList, addComment, deleteComment, isLoading };
+  return { commentList, addComment, deleteComment, isLoading, fetchComments };
 };
 
 export default useComments;

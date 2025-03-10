@@ -29,12 +29,20 @@ const FeedCard = ({
   const [showComments, setShowComments] = useState(false);
   const { user, isAuthenticated } = useAuth();
   const { likeCount, isLiked, toggleLike } = useLike(0, postId);
-  const { commentList, addComment, deleteComment, isLoading } = useComments({
-    postId,
-    currentUser: user,
-  });
+  const { commentList, addComment, deleteComment, isLoading, fetchComments } =
+    useComments({
+      postId,
+      currentUser: user,
+    });
 
   const [isEditMode, setIsEditMode] = useState(false);
+
+  // ✅ 댓글 표시 상태가 변경될 때 댓글 목록 다시 불러오기
+  useEffect(() => {
+    if (showComments) {
+      fetchComments();
+    }
+  }, [showComments]);
 
   // ✅ 게시물 수정 모드 활성화
   const handleEditPost = () => setIsEditMode(true);
@@ -131,10 +139,11 @@ const FeedCard = ({
               <CommentList
                 postId={postId}
                 currentUser={user}
+                commentList={commentList}
                 onDeleteComment={deleteComment}
               />
             )}
-            <CommentInput postId={postId} />
+            <CommentInput postId={postId} onCommentAdded={fetchComments} />
           </>
         )}
       </div>
