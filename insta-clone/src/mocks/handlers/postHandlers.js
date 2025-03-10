@@ -30,7 +30,6 @@ let posts = [
 // ✅ 세션에서 사용자 정보 가져오기
 const getSessionUser = () => {
   const sessionUser = sessionStorage.getItem('sessionUser');
-  console.log('🔍 [MSW] 세션 사용자 확인:', sessionUser ? '있음' : '없음');
   return sessionUser ? JSON.parse(sessionUser) : null;
 };
 
@@ -140,10 +139,8 @@ const createPostHandler = http.post('api/posts', async ({ request }) => {
 const updatePostHandler = http.patch(
   'api/posts/:id',
   async ({ request, params }) => {
-    console.log('🔄 [MSW] PATCH 요청으로 게시물 수정 요청 받음:', params.id);
     const sessionUser = getSessionUser();
     if (!sessionUser) {
-      console.log('❌ [MSW] 게시물 수정 실패: 로그인 필요');
       return HttpResponse.json(
         { success: false, message: '로그인이 필요합니다.' },
         { status: 401 }
@@ -155,7 +152,6 @@ const updatePostHandler = http.patch(
       const post = posts.find(p => p.postId === postId);
 
       if (!post) {
-        console.log('❌ [MSW] 게시물 수정 실패: 게시물 없음');
         return HttpResponse.json(
           {
             success: false,
@@ -166,7 +162,6 @@ const updatePostHandler = http.patch(
       }
 
       if (post.author !== sessionUser.email) {
-        console.log('❌ [MSW] 게시물 수정 실패: 권한 없음');
         return HttpResponse.json(
           {
             success: false,
@@ -177,16 +172,13 @@ const updatePostHandler = http.patch(
       }
 
       const updateData = await request.json();
-      console.log('🔄 [MSW] 게시물 수정 데이터:', updateData);
 
-      // 이미지가 제공된 경우에만 유효성 검사 수행
       if (
         updateData.postImg &&
         updateData.postImg !== post.postImg &&
         !updateData.postImg.startsWith('data:image/') &&
         !updateData.postImg.startsWith('http')
       ) {
-        console.log('❌ [MSW] 게시물 수정 실패: 유효하지 않은 이미지');
         return HttpResponse.json(
           { success: false, message: '유효하지 않은 인코딩 이미지입니다.' },
           { status: 400 }
@@ -210,8 +202,6 @@ const updatePostHandler = http.patch(
         posts[postIndex] = updatedPost;
       }
 
-      console.log('✅ [MSW] 게시물 수정 성공:', updatedPost);
-
       return HttpResponse.json(
         {
           success: true,
@@ -220,7 +210,6 @@ const updatePostHandler = http.patch(
         { status: 200 }
       );
     } catch (error) {
-      console.error('❌ [MSW] 게시물 수정 중 오류:', error);
       return HttpResponse.json(
         { success: false, message: '게시물 수정 중 오류가 발생했습니다.' },
         { status: 500 }

@@ -39,7 +39,7 @@ const Profile = ({ onClose }) => {
               return;
             }
           } catch (error) {
-            console.error('세션 스토리지 파싱 실패:', error);
+            // 세션 스토리지 파싱 실패 처리
           }
         }
 

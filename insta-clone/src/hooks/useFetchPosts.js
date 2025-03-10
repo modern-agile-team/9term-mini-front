@@ -33,10 +33,7 @@ const useFetchPosts = () => {
         throw new Error('잘못된 API 응답 형식: 데이터가 배열이 아닙니다.');
       }
 
-      console.log('📢 [useFetchPosts] 불러온 게시물:', response.data);
-
       if (response.data.length === 0) {
-        console.log('🛑 더 이상 불러올 게시물이 없습니다.');
         setHasMore(false);
         // Observer 연결 해제
         if (observerInstance.current) {
@@ -50,7 +47,6 @@ const useFetchPosts = () => {
 
         // 새로운 게시물이 없으면 더 이상 불러올 데이터가 없는 것으로 간주
         if (newPosts.length === 0) {
-          console.log('🛑 더 이상 새로운 게시물이 없습니다.');
           setHasMore(false);
           // Observer 연결 해제
           if (observerInstance.current) {
@@ -63,7 +59,6 @@ const useFetchPosts = () => {
         }
       }
     } catch (error) {
-      console.error('❌ 피드 데이터를 불러오는 중 오류 발생:', error);
       setHasMore(false);
       // Observer 연결 해제
       if (observerInstance.current) {
@@ -103,11 +98,10 @@ const useFetchPosts = () => {
     observerInstance.current = new IntersectionObserver(
       entries => {
         if (entries[0].isIntersecting && !isLoading && hasMore) {
-          console.log('🔍 [INFO] Observer 트리거됨 - 추가 데이터 로드');
           fetchPosts();
         }
       },
-      { threshold: 0.1 } // threshold 값을 낮춰 더 빨리 감지하도록 수정
+      { threshold: 0.1 }
     );
 
     observerInstance.current.observe(currentObserverRef);

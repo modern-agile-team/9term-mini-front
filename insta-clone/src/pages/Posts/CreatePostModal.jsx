@@ -36,16 +36,10 @@ const CreatePostModal = ({ onClose, postId, initialData = {} }) => {
 
             setSelectedImage(jsonResponse.data.postImg);
             setCaption(jsonResponse.data.content);
-            console.log(
-              '✅ [CreatePostModal] 게시물 불러오기 성공:',
-              jsonResponse.data
-            );
           } else {
-            console.error('❌ 응답이 JSON 형식이 아님:', contentType);
             throw new Error('서버 응답 형식 오류');
           }
         } catch (error) {
-          console.error('게시물 불러오기 오류:', error);
           alert(error.message || '게시물을 불러올 수 없습니다.');
         }
       };
@@ -105,8 +99,6 @@ const CreatePostModal = ({ onClose, postId, initialData = {} }) => {
         requestData.postImg = selectedImage;
       }
 
-      console.log('✅ [CreatePostModal] 요청 데이터:', requestData);
-
       if (postId) {
         // 게시글 수정
         try {
@@ -120,11 +112,9 @@ const CreatePostModal = ({ onClose, postId, initialData = {} }) => {
           if (contentType && contentType.includes('application/json')) {
             response = await response.json();
           } else {
-            console.error('❌ 응답이 JSON 형식이 아님:', contentType);
             throw new Error('서버 응답 형식 오류');
           }
         } catch (error) {
-          console.error('❌ 게시글 수정 요청 오류:', error);
           throw error;
         }
       } else {
@@ -140,11 +130,9 @@ const CreatePostModal = ({ onClose, postId, initialData = {} }) => {
           if (contentType && contentType.includes('application/json')) {
             response = await response.json();
           } else {
-            console.error('❌ 응답이 JSON 형식이 아님:', contentType);
             throw new Error('서버 응답 형식 오류');
           }
         } catch (error) {
-          console.error('❌ 게시글 생성 요청 오류:', error);
           throw error;
         }
       }
@@ -161,7 +149,6 @@ const CreatePostModal = ({ onClose, postId, initialData = {} }) => {
           content: caption,
           postImg: selectedImage,
         });
-        console.log('✅ [CreatePostModal] 게시물 수정 완료:', postId);
       } else if (response.data && response.data.postId) {
         // 새 게시물 추가
         const newPost = {
@@ -175,13 +162,11 @@ const CreatePostModal = ({ onClose, postId, initialData = {} }) => {
           likedBy: [],
         };
         addPost(newPost);
-        console.log('✅ [CreatePostModal] 새 게시물 추가 완료:', newPost);
       }
 
       alert(postId ? '게시물이 수정되었습니다.' : '게시물이 업로드되었습니다.');
       onClose();
     } catch (error) {
-      console.error('게시물 저장 오류:', error);
       alert(error.message || '게시물 저장에 실패했습니다.');
     } finally {
       setIsSubmitting(false);

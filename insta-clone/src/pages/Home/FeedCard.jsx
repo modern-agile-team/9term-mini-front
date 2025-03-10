@@ -72,11 +72,9 @@ const FeedCard = ({
           if (jsonResponse.success && jsonResponse.data) {
             setAuthorProfileImg(jsonResponse.data.profileImg);
           }
-        } else {
-          console.error('❌ 응답이 JSON 형식이 아님:', contentType);
         }
       } catch (error) {
-        console.error('작성자 프로필 이미지 가져오기 실패:', error);
+        // 오류 발생 시 기본 프로필 이미지 사용
       }
     };
 
@@ -89,10 +87,6 @@ const FeedCard = ({
       // 현재 로그인한 사용자가 작성자인 경우에만 프로필 이미지 업데이트
       if (user && user.email === author) {
         setAuthorProfileImg(event.detail.profileImg);
-        console.log(
-          '✅ [FeedCard] 프로필 이미지 업데이트:',
-          event.detail.profileImg
-        );
       }
     };
 
@@ -131,13 +125,11 @@ const FeedCard = ({
 
       // Zustand 스토어에서 게시물 삭제
       deletePost(postId);
-      console.log('✅ [FeedCard] 게시물 삭제 완료:', postId);
 
       // ✅ 삭제 콜백 함수가 있을 경우 실행
       if (onDelete) onDelete(postId);
     } catch (error) {
       alert('게시물 삭제에 실패했습니다. 다시 시도해주세요.');
-      console.error('게시물 삭제 실패:', error);
     }
   };
 
@@ -147,7 +139,6 @@ const FeedCard = ({
       await toggleLike();
     } catch (error) {
       alert('좋아요 상태 업데이트에 실패했습니다.');
-      console.error('좋아요 상태 업데이트 실패:', error);
     }
   };
 
@@ -245,13 +236,7 @@ const FeedCard = ({
 
                   if (jsonResponse.success && jsonResponse.data) {
                     setPostContent(jsonResponse.data.content);
-                    console.log(
-                      '✅ [FeedCard] 게시글 업데이트 완료:',
-                      jsonResponse.data
-                    );
                   }
-                } else {
-                  console.error('❌ 응답이 JSON 형식이 아님:', contentType);
                 }
               } catch (error) {
                 console.error('게시글 업데이트 실패:', error);

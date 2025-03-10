@@ -70,14 +70,10 @@ const registerHandler = http.post('api/register', async ({ request }) => {
 // ✅ 로그인
 const loginHandler = http.post('api/login', async ({ request }) => {
   try {
-    console.log('🔒 [MSW] 로그인 요청 받음');
     const reqBody = await request.json();
-    console.log('🔒 [MSW] 로그인 요청 바디:', reqBody);
-
     const { email, pwd } = reqBody;
 
     if (!email || !pwd) {
-      console.log('❌ [MSW] 로그인 실패: 이메일/비밀번호 누락');
       return HttpResponse.json(
         { success: false, message: '이메일과 비밀번호는 필수입니다.' },
         { status: 400 }
@@ -85,10 +81,8 @@ const loginHandler = http.post('api/login', async ({ request }) => {
     }
 
     const user = users.find(u => u.email === email);
-    console.log('🔍 [MSW] 사용자 검색 결과:', user ? '찾음' : '없음');
 
     if (!user) {
-      console.log('❌ [MSW] 로그인 실패: 존재하지 않는 이메일');
       return HttpResponse.json(
         {
           success: false,
@@ -98,9 +92,7 @@ const loginHandler = http.post('api/login', async ({ request }) => {
       );
     }
 
-    console.log('🔐 [MSW] 비밀번호 비교:', { 입력: pwd, 저장: user.pwd });
     if (user.pwd !== pwd) {
-      console.log('❌ [MSW] 로그인 실패: 비밀번호 불일치');
       return HttpResponse.json(
         {
           success: false,
@@ -109,8 +101,6 @@ const loginHandler = http.post('api/login', async ({ request }) => {
         { status: 401 }
       );
     }
-
-    console.log('✅ [MSW] 로그인 성공:', user.email);
 
     const userData = {
       id: user.id,
@@ -128,7 +118,6 @@ const loginHandler = http.post('api/login', async ({ request }) => {
       data: { user: userData },
     });
   } catch (error) {
-    console.error('❌ [MSW] 로그인 처리 중 오류:', error);
     return HttpResponse.json(
       { success: false, message: '서버 오류가 발생했습니다.' },
       { status: 500 }
@@ -190,24 +179,9 @@ const logoutHandler = http.post('api/logout', async () => {
 // ✅ 프로필 이미지 수정
 const profileHandler = http.patch('api/users/me', async ({ request }) => {
   try {
-    console.log('🔒 [MSW] 프로필 이미지 수정 요청 받음');
-    const sessionUser = sessionStorage.getItem('sessionUser');
-    if (!sessionUser) {
-      console.log('❌ [MSW] 프로필 이미지 수정 실패: 로그인 필요');
-      return HttpResponse.json(
-        { success: false, message: '로그인이 필요합니다.' },
-        { status: 401 }
-      );
-    }
-
     const reqBody = await request.json();
-    console.log('🔒 [MSW] 프로필 이미지 수정 요청 바디:', {
-      hasProfileImg: !!reqBody.profileImg,
-      profileImgLength: reqBody.profileImg?.length,
-    });
-
     const { profileImg } = reqBody;
-    const user = JSON.parse(sessionUser);
+    const user = JSON.parse(sessionStorage.getItem('sessionUser'));
 
     // 사용자 객체 업데이트
     user.profileImg = profileImg;
@@ -216,12 +190,10 @@ const profileHandler = http.patch('api/users/me', async ({ request }) => {
     const userIndex = users.findIndex(u => u.id === user.id);
     if (userIndex !== -1) {
       users[userIndex].profileImg = profileImg;
-      console.log('✅ [MSW] users 배열 업데이트 성공:', users[userIndex].email);
     }
 
     // 세션 스토리지 업데이트
     sessionStorage.setItem('sessionUser', JSON.stringify(user));
-    console.log('✅ [MSW] 세션 스토리지 업데이트 성공');
 
     return HttpResponse.json({
       success: true,
@@ -232,7 +204,6 @@ const profileHandler = http.patch('api/users/me', async ({ request }) => {
       },
     });
   } catch (error) {
-    console.error('❌ [MSW] 프로필 이미지 수정 중 오류:', error);
     return HttpResponse.json(
       { success: false, message: '서버 오류가 발생했습니다.' },
       { status: 500 }
@@ -243,19 +214,8 @@ const profileHandler = http.patch('api/users/me', async ({ request }) => {
 // ✅ 프로필 이미지 삭제
 const profileDeleteHandler = http.delete('api/users/me', async () => {
   try {
-    console.log('🔒 [MSW] 프로필 이미지 삭제 요청 받음');
-    const sessionUser = sessionStorage.getItem('sessionUser');
-    if (!sessionUser) {
-      console.log('❌ [MSW] 프로필 이미지 삭제 실패: 로그인 필요');
-      return HttpResponse.json(
-        { success: false, message: '로그인이 필요합니다.' },
-        { status: 401 }
-      );
-    }
-
-    const user = JSON.parse(sessionUser);
+    const user = JSON.parse(sessionStorage.getItem('sessionUser'));
     if (!user.profileImg) {
-      console.log('❌ [MSW] 프로필 이미지 삭제 실패: 이미지 없음');
       return HttpResponse.json(
         {
           success: false,
@@ -272,12 +232,10 @@ const profileDeleteHandler = http.delete('api/users/me', async () => {
     const userIndex = users.findIndex(u => u.id === user.id);
     if (userIndex !== -1) {
       users[userIndex].profileImg = null;
-      console.log('✅ [MSW] users 배열 업데이트 성공:', users[userIndex].email);
     }
 
     // 세션 스토리지 업데이트
     sessionStorage.setItem('sessionUser', JSON.stringify(user));
-    console.log('✅ [MSW] 세션 스토리지 업데이트 성공');
 
     return HttpResponse.json({
       success: true,
@@ -288,7 +246,6 @@ const profileDeleteHandler = http.delete('api/users/me', async () => {
       },
     });
   } catch (error) {
-    console.error('❌ [MSW] 프로필 이미지 삭제 중 오류:', error);
     return HttpResponse.json(
       { success: false, message: '서버 오류가 발생했습니다.' },
       { status: 500 }
@@ -299,13 +256,9 @@ const profileDeleteHandler = http.delete('api/users/me', async () => {
 // ✅ 사용자 인증 확인
 const checkAuthHandler = http.get('api/users/me', async ({ request }) => {
   try {
-    console.log('🔒 [MSW] 사용자 인증 확인 요청');
-
     const sessionUser = sessionStorage.getItem('sessionUser');
-    console.log('🔍 [MSW] 세션 사용자:', sessionUser);
 
     if (!sessionUser) {
-      console.log('❌ [MSW] 인증 실패: 세션 없음');
       return HttpResponse.json(
         { success: false, message: '로그인이 필요합니다.' },
         { status: 401 }
@@ -316,14 +269,12 @@ const checkAuthHandler = http.get('api/users/me', async ({ request }) => {
     const user = users.find(u => u.id === userData.id);
 
     if (!user) {
-      console.log('❌ [MSW] 인증 실패: 유효하지 않은 사용자');
       return HttpResponse.json(
         { success: false, message: '유효하지 않은 사용자입니다.' },
         { status: 401 }
       );
     }
 
-    console.log('✅ [MSW] 인증 성공:', user.email);
     return HttpResponse.json({
       success: true,
       data: {
@@ -336,7 +287,6 @@ const checkAuthHandler = http.get('api/users/me', async ({ request }) => {
       },
     });
   } catch (error) {
-    console.error('❌ [MSW] 인증 확인 중 오류:', error);
     return HttpResponse.json(
       { success: false, message: '서버 오류가 발생했습니다.' },
       { status: 500 }

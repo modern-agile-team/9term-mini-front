@@ -11,7 +11,6 @@ const usePostStore = create(set => ({
 
   // 게시물 추가 (새 게시물 생성)
   addPost: newPost => {
-    console.log('✅ [usePostStore] 새 게시물 추가:', newPost);
     return set(state => ({
       posts: [newPost, ...state.posts],
     }));
@@ -19,7 +18,6 @@ const usePostStore = create(set => ({
 
   // 게시물 업데이트 (수정)
   updatePost: updatedPost => {
-    console.log('✅ [usePostStore] 게시물 업데이트:', updatedPost);
     return set(state => ({
       posts: state.posts.map(post =>
         post.postId === updatedPost.postId ? { ...post, ...updatedPost } : post
@@ -29,7 +27,6 @@ const usePostStore = create(set => ({
 
   // 게시물 삭제
   deletePost: postId => {
-    console.log('✅ [usePostStore] 게시물 삭제:', postId);
     return set(state => ({
       posts: state.posts.filter(post => post.postId !== postId),
     }));

@@ -41,7 +41,7 @@ const Navbar = () => {
           }
         }
       } catch (error) {
-        console.error('사용자 정보 로딩 실패:', error);
+        // 오류 처리
       }
     };
 
@@ -88,14 +88,6 @@ const Navbar = () => {
       : user?.profileImg
         ? user.profileImg
         : '/assets/icons/profile.svg';
-
-  console.log('✅ [Navbar] 현재 프로필 이미지:', {
-    userId,
-    profileImagesState: profileImages,
-    userProfileImg: user?.profileImg,
-    currentProfileImage,
-    refreshKey,
-  });
 
   return (
     <>

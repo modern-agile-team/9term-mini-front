@@ -60,27 +60,19 @@ const Login = () => {
     setError('');
 
     try {
-      console.log('🔒 [Login] 로그인 시도:', email);
       const success = await login(email, pwd);
 
       if (success) {
-        console.log('✅ [Login] 로그인 성공, 홈으로 이동');
         setIsRedirecting(true);
-
-        // 세션 스토리지에 로그인 상태 저장 확인
-        const sessionUser = sessionStorage.getItem('sessionUser');
-        console.log('🔍 [Login] 세션 사용자:', sessionUser);
 
         // 강제로 홈으로 이동 (페이지 새로고침)
         setTimeout(() => {
           window.location.href = '/';
         }, 500);
       } else {
-        console.error('❌ [Login] 로그인 실패: 성공 응답 없음');
         setIsLoading(false);
       }
     } catch (error) {
-      console.error('❌ [Login] 로그인 오류:', error);
       setError(error.message || '로그인에 실패했습니다. 다시 시도해주세요.');
       setIsLoading(false);
       setIsRedirecting(false);

@@ -41,7 +41,6 @@ const Signup = () => {
         throw new Error(data.error || '회원가입 실패: 다시 시도해주세요.');
       }
 
-      console.log('✅ 회원가입 성공:', data);
       navigate('/login'); // ✅ 회원가입 성공 시 로그인 페이지로 이동
     } catch (error) {
       setError(error.message);
