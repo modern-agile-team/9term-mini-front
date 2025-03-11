@@ -94,8 +94,8 @@ const useComments = ({ postId } = {}) => {
               jsonResponse.data.userId ||
               (sessionUser ? sessionUser.email : 'unknown'),
             comment: newComment,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
+            createdAt: jsonResponse.data.createdAt,
+            updatedAt: jsonResponse.data.updatedAt,
           };
 
           console.log('✅ 새 댓글 데이터:', newCommentData);
