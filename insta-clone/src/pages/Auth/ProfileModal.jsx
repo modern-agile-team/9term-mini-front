@@ -90,12 +90,13 @@ const Profile = ({ onClose }) => {
   }, [user, setProfileImage]);
 
   // 현재 프로필 이미지 확인
-  const currentProfileImage =
-    userId && profileImages[userId]
-      ? profileImages[userId]
-      : user?.profileImg
-        ? user.profileImg
-        : '/assets/icons/profile.svg';
+  let currentProfileImage = '/assets/icons/profile.svg';
+
+  if (userId && profileImages[userId]) {
+    currentProfileImage = profileImages[userId];
+  } else if (user?.profileImg) {
+    currentProfileImage = user.profileImg;
+  }
 
   // 파일 선택 처리
   const handleFileChange = e => {
