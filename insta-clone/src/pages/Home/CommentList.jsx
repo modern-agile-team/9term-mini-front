@@ -4,11 +4,17 @@ const CommentList = ({
   commentList = [],
   onDeleteComment,
 }) => {
+  // commentList가 배열인지 확인
+  const safeCommentList = Array.isArray(commentList) ? commentList : [];
+
   return (
     <div className="mt-2 space-y-2">
-      {commentList?.length > 0 ? (
-        commentList.map(comment => (
-          <div key={comment.id} className="flex items-start">
+      {safeCommentList?.length > 0 ? (
+        safeCommentList.map(comment => (
+          <div
+            key={comment.id || `comment-${Math.random()}`}
+            className="flex items-start"
+          >
             <div className="flex-1">
               <p className="text-sm">
                 <span className="font-bold">{comment.userId}</span>&nbsp;

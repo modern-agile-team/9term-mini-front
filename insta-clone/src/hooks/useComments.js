@@ -33,14 +33,19 @@ const useComments = ({ postId } = {}) => {
       if (contentType && contentType.includes('application/json')) {
         const jsonResponse = await response.json();
 
-        if (jsonResponse.success) {
-          setCommentList(jsonResponse.data || []);
-        } else {
+        // 데이터가 배열인지 확인하고, 아니면 빈 배열로 처리
+        const responseData =
+          jsonResponse.success && Array.isArray(jsonResponse.data)
+            ? jsonResponse.data
+            : [];
+
+        setCommentList(responseData);
+
+        if (!jsonResponse.success) {
           console.warn(
             '⚠️ [useComments] 댓글 불러오기 실패:',
             jsonResponse.message
           );
-          setCommentList([]);
         }
       } else {
         console.error('❌ 응답이 JSON 형식이 아님:', contentType);

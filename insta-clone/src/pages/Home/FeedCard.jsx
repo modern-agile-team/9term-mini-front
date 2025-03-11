@@ -208,7 +208,7 @@ const FeedCard = ({
               <CommentList
                 postId={postId}
                 currentUser={user}
-                commentList={commentList}
+                commentList={commentList || []}
                 onDeleteComment={deleteComment}
               />
             )}
