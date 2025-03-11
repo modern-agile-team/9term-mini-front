@@ -29,7 +29,8 @@ const useFetchPosts = () => {
         .json();
 
       // ✅ 올바른 데이터 구조인지 확인
-      if (!response.success || !Array.isArray(response.data)) {
+      if (!response || !response.success || !Array.isArray(response.data)) {
+        console.error('API 응답 형식 오류:', response);
         throw new Error('잘못된 API 응답 형식: 데이터가 배열이 아닙니다.');
       }
 
@@ -42,7 +43,9 @@ const useFetchPosts = () => {
       } else {
         // ✅ 중복 게시물 필터링 및 상태 업데이트
         const newPosts = response.data.filter(
-          newPost => !posts.some(post => post.postId === newPost.postId)
+          newPost =>
+            newPost.postId &&
+            !posts.some(post => post.postId === newPost.postId)
         );
 
         // 새로운 게시물이 없으면 더 이상 불러올 데이터가 없는 것으로 간주

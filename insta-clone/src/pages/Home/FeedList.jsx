@@ -19,14 +19,16 @@ const FeedList = ({ posts = [], observerRef, hasMore = true }) => {
     <div className="w-full max-w-[768px] mx-auto p-6 flex flex-col items-center">
       {/* ✅ 피드가 없을 때 메시지 추가 */}
       {feedPosts.length > 0 ? (
-        feedPosts.map(post => (
-          <div
-            key={post.postId}
-            className="w-[80%] border-b border-gray-200 last:border-none"
-          >
-            <FeedCard {...post} onDelete={handleDeletePost} />
-          </div>
-        ))
+        feedPosts
+          .filter(post => post && post.postId) // postId가 없는 게시물 필터링
+          .map(post => (
+            <div
+              key={post.postId}
+              className="w-[80%] border-b border-gray-200 last:border-none"
+            >
+              <FeedCard {...post} onDelete={handleDeletePost} />
+            </div>
+          ))
       ) : (
         <p className="text-gray-500 text-sm py-4">게시물이 없습니다.</p>
       )}

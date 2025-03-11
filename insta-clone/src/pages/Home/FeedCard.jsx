@@ -24,7 +24,8 @@ const FeedCard = ({
       author,
       content,
     });
-    return null;
+    // 기본값을 사용하여 렌더링 시도
+    postId = `temp-${Date.now()}`;
   }
 
   const [postContent, setPostContent] = useState(content);

@@ -1,6 +1,7 @@
 import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from './App.jsx';
+import { StrictMode } from 'react';
 
 // 📌 개발 환경에서만 MSW 실행
 if (process.env.NODE_ENV === 'development') {
@@ -8,10 +9,18 @@ if (process.env.NODE_ENV === 'development') {
   import('./mocks/browser').then(({ worker }) => {
     worker.start().then(() => {
       // MSW 워커가 시작되면 React 앱 렌더링
-      createRoot(document.getElementById('root')).render(<App />);
+      createRoot(document.getElementById('root')).render(
+        <StrictMode>
+          <App />
+        </StrictMode>
+      );
     });
   });
 } else {
   // 🚀 배포 환경에서는 MSW 없이 바로 React 렌더링
-  createRoot(document.getElementById('root')).render(<App />);
+  createRoot(document.getElementById('root')).render(
+    <StrictMode>
+      <App />
+    </StrictMode>
+  );
 }
