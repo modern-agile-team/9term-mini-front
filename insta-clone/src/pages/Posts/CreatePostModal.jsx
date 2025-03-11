@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import apiClient from '@/services/apiClient';
+import usePostStore from '@/store/usePostStore';
+import useAuth from '@/hooks/useAuth';
 
 const CreatePostModal = ({ onClose, postId, initialData = {} }) => {
   const [dragActive, setDragActive] = useState(false);
@@ -7,20 +9,40 @@ const CreatePostModal = ({ onClose, postId, initialData = {} }) => {
     initialData.postImg || null
   );
   const [caption, setCaption] = useState(initialData.content || '');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const inputRef = useRef(null);
+
+  // Zustand 스토어에서 액션 가져오기
+  const { addPost, updatePost } = usePostStore();
+  const { user } = useAuth();
 
   // postId가 있을 경우 기존 게시물 불러오기
   useEffect(() => {
     if (postId) {
       const fetchPost = async () => {
         try {
-          const response = await apiClient.get(`api/posts/${postId}`).json();
-          if (!response) throw new Error('게시물을 불러올 수 없습니다.');
+          const response = await apiClient.get(`api/posts/${postId}`, {
+            throwHttpErrors: false,
+          });
 
-          setSelectedImage(response.postImg);
-          setCaption(response.content);
+          // 응답이 JSON인지 확인
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const jsonResponse = await response.json();
+
+            if (!jsonResponse.success) {
+              throw new Error(
+                jsonResponse.message || '게시물을 불러올 수 없습니다.'
+              );
+            }
+
+            setSelectedImage(jsonResponse.data.postImg);
+            setCaption(jsonResponse.data.content);
+          } else {
+            throw new Error('서버 응답 형식 오류');
+          }
         } catch (error) {
-          console.error('게시물 불러오기 오류:', error);
+          alert(error.message || '게시물을 불러올 수 없습니다.');
         }
       };
       fetchPost();
@@ -59,30 +81,95 @@ const CreatePostModal = ({ onClose, postId, initialData = {} }) => {
 
   // 새 게시물 업로드 또는 수정
   const handleUpload = async () => {
-    if (!selectedImage) return;
+    // 새 게시물 생성 시에만 이미지 필수 체크
+    if (!postId && !selectedImage) {
+      alert('이미지를 선택해주세요.');
+      return;
+    }
+
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
     try {
       let response;
-      if (postId) {
-        response = await apiClient
-          .put(`api/posts/${postId}`, {
-            json: { postImg: selectedImage, content: caption },
-          })
-          .json();
-      } else {
-        response = await apiClient
-          .post('api/posts', {
-            json: { postImg: selectedImage, content: caption },
-          })
-          .json();
+      const requestData = {
+        content: caption,
+      };
+
+      // 이미지가 있는 경우에만 요청 데이터에 포함
+      if (selectedImage) {
+        requestData.postImg = selectedImage;
       }
 
-      if (!response.ok) throw new Error('업로드 실패');
+      if (postId) {
+        // 게시글 수정
+        try {
+          response = await apiClient.patch(`api/posts/${postId}`, {
+            json: requestData,
+            throwHttpErrors: false,
+          });
+
+          // 응답이 JSON인지 확인
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            response = await response.json();
+          } else {
+            throw new Error('서버 응답 형식 오류');
+          }
+        } catch (error) {
+          throw error;
+        }
+      } else {
+        // 새 게시글 생성
+        try {
+          response = await apiClient.post('api/posts', {
+            json: requestData,
+            throwHttpErrors: false,
+          });
+
+          // 응답이 JSON인지 확인
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            response = await response.json();
+          } else {
+            throw new Error('서버 응답 형식 오류');
+          }
+        } catch (error) {
+          throw error;
+        }
+      }
+
+      if (!response.success) {
+        throw new Error(response.message || '업로드에 실패했습니다.');
+      }
+
+      // 게시물 상태 업데이트
+      if (postId) {
+        // 수정된 게시물 정보 업데이트
+        updatePost({
+          postId: postId,
+          content: caption,
+          postImg: selectedImage,
+        });
+      } else if (response.data && response.data.postId) {
+        // 새 게시물 추가
+        const newPost = {
+          postId: response.data.postId,
+          content: caption,
+          postImg: selectedImage,
+          createdAt: new Date().toISOString(),
+          author: user?.email || 'unknown',
+          likedBy: [],
+        };
+        addPost(newPost);
+      }
 
       alert(postId ? '게시물이 수정되었습니다.' : '게시물이 업로드되었습니다.');
       onClose();
     } catch (error) {
-      console.error('게시물 저장 오류:', error);
+      alert(error.message || '게시물 저장에 실패했습니다.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -123,9 +210,14 @@ const CreatePostModal = ({ onClose, postId, initialData = {} }) => {
           {selectedImage && (
             <button
               onClick={handleUpload}
-              className="absolute right-3 text-sm font-medium text-[#0095F6] hover:text-[#1877F2] cursor-pointer transition-colors"
+              disabled={isSubmitting}
+              className={`absolute right-3 text-sm font-medium ${
+                isSubmitting
+                  ? 'text-gray-400 cursor-not-allowed'
+                  : 'text-[#0095F6] hover:text-[#1877F2] cursor-pointer'
+              } transition-colors`}
             >
-              {postId ? '수정하기' : '공유하기'}
+              {isSubmitting ? '처리 중...' : postId ? '수정하기' : '공유하기'}
             </button>
           )}
         </div>
@@ -140,7 +232,9 @@ const CreatePostModal = ({ onClose, postId, initialData = {} }) => {
           onDrop={handleDrop}
         >
           <div
-            className={`flex ${selectedImage ? 'flex-col' : ''} transition-colors duration-200`}
+            className={`flex ${
+              selectedImage ? 'flex-col' : ''
+            } transition-colors duration-200`}
           >
             {selectedImage ? (
               <>
@@ -152,12 +246,12 @@ const CreatePostModal = ({ onClose, postId, initialData = {} }) => {
                   />
                 </div>
                 {/* 글쓰기 영역 */}
-                <div className="w-full mt-2">
+                <div className="w-full mt-2 px-4">
                   <textarea
                     value={caption}
                     onChange={e => setCaption(e.target.value)}
                     placeholder="문구 입력..."
-                    className="w-full h-25 resize-none
+                    className="w-full h-25 resize-none p-2
                     bg-[#fafafa]
                     border border-gray-300 rounded-sm focus:outline-none
                     focus:border-gray-400
@@ -172,7 +266,7 @@ const CreatePostModal = ({ onClose, postId, initialData = {} }) => {
             ) : (
               <div className="text-center flex-col justify-center items-center px-4 py-20">
                 <div className="mx-auto mb-6 flex flex-col justify-center items-center">
-                  <img src="/assets/icons/photo.svg" />
+                  <img src="/assets/icons/photo.svg" alt="Upload" />
                 </div>
                 <h3 className="text-lg mb-4">
                   {dragActive

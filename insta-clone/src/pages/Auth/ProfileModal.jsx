@@ -1,107 +1,184 @@
 import { useRef, useState, useEffect } from 'react';
-import apiClient from '@/services/apiClient'; // apiClient 사용
+import apiClient from '@/services/apiClient';
 import useProfileStore from '@/store/useProfileStore';
+import useAuth from '@/hooks/useAuth';
 
 const Profile = ({ onClose }) => {
   const inputRef = useRef(null);
-  const { profileImage, setProfileImage } = useProfileStore();
+  const { profileImages, setProfileImage, clearProfileImage } =
+    useProfileStore();
+  const { user, setUser } = useAuth();
+  const [userId, setUserId] = useState(null);
   const [email, setEmail] = useState('');
-  const [imageModified, setImageModified] = useState(false); //이미지 변경여부확인
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const response = await apiClient.get('api/users/me');
-        const data = await response.json();
-        console.log('✅ 사용자 정보:', data); // 응답 확인
+        setIsLoading(true);
+        setError(null);
 
-        if (data.email) {
-          // 🔥 `success` 체크 제거
-          setEmail(data.email);
+        // user 객체에서 사용자 정보 확인
+        if (user) {
+          setEmail(user.email);
+          setUserId(user.id);
+          if (user.profileImg) {
+            setProfileImage(user.id, user.profileImg);
+          } else {
+            setProfileImage(user.id, null);
+          }
+          setIsLoading(false);
+          return;
+        }
+
+        // 그렇지 않으면 API 호출
+        const response = await apiClient.get('api/users/me').json();
+
+        if (!response || !response.success) {
+          throw new Error(
+            response?.message || '사용자 정보를 불러올 수 없습니다.'
+          );
+        }
+
+        // data.data가 배열이고 첫 번째 요소에 사용자 정보가 있음
+        const userData = response.data[0];
+        if (!userData || !userData.email) {
+          throw new Error('사용자 데이터가 올바르지 않습니다.');
+        }
+
+        setEmail(userData.email);
+        setUserId(userData.id);
+
+        if (userData.profileImg) {
+          setProfileImage(userData.id, userData.profileImg);
         } else {
-          console.warn('❌ 이메일 데이터가 없습니다!');
+          setProfileImage(userData.id, null);
         }
       } catch (error) {
-        console.error('❌ 사용자 정보 가져오기 실패:', error);
+        setError(error.message);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchUserData();
-  }, []);
+  }, [user, setProfileImage]);
 
-  const handleFile = file => {
-    if (file && file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfileImage(reader.result);
-        setImageModified(true);
-      };
-      reader.readAsDataURL(file);
+  // 현재 프로필 이미지 확인
+  let currentProfileImage = '/assets/icons/profile.svg';
+
+  if (userId && profileImages[userId]) {
+    currentProfileImage = profileImages[userId];
+  } else if (user?.profileImg) {
+    currentProfileImage = user.profileImg;
+  }
+
+  // 파일 선택 처리
+  const handleFileChange = e => {
+    const file = e.target.files[0];
+    if (!file) {
+      return;
     }
-  };
 
-  const handleImageUpload = async imageToUpload => {
-    try {
-      const response = await apiClient.patch('api/users/me', {
-        json: { profileImage: imageToUpload }, // 프로필 이미지 수정
-      });
+    if (!file.type.startsWith('image/')) {
+      alert('이미지 파일만 업로드할 수 있습니다.');
+      return;
+    }
 
-      if (!response.ok) {
-        throw new Error('프로필 이미지 업로드 실패');
+    const reader = new FileReader();
+
+    reader.onload = async event => {
+      const imageDataUrl = event.target.result;
+
+      // 이미지 업로드 처리
+      try {
+        const response = await apiClient
+          .patch('api/users/me', {
+            json: { profileImg: imageDataUrl },
+          })
+          .json();
+
+        if (!response.success) {
+          throw new Error(response.message || '프로필 이미지 업로드 실패');
+        }
+
+        // 프로필 이미지 상태 업데이트
+        setProfileImage(userId, imageDataUrl);
+
+        // useAuth의 사용자 정보 업데이트
+        if (setUser && user) {
+          setUser({
+            ...user,
+            profileImg: imageDataUrl,
+          });
+        }
+
+        // 이벤트 발생
+        window.dispatchEvent(
+          new CustomEvent('profile:updated', {
+            detail: { profileImg: imageDataUrl },
+          })
+        );
+      } catch (error) {
+        alert(error.message || '이미지 업로드에 실패했습니다.');
       }
+    };
 
-      console.log('✅ 프로필 이미지 업로드 성공');
-    } catch (error) {
-      console.error(error.message);
-      alert('이미지 업로드에 실패했습니다.');
-      setProfileImage(null);
-    }
+    reader.onerror = () => {
+      alert('파일을 읽는 중 오류가 발생했습니다.');
+    };
+
+    reader.readAsDataURL(file);
   };
 
-  const handleSaveAndClose = async () => {
-    if (profileImage) {
-      await handleImageUpload(profileImage);
-    }
-    onClose();
-  };
-
+  // 이미지 삭제
   const handleImageDelete = async () => {
     try {
-      const response = await apiClient.delete('api/users/me', {
-        json: { profileImage: null }, // 프로필 이미지 삭제
-      });
+      const response = await apiClient.delete('api/users/me').json();
 
-      if (!response.ok) {
-        throw new Error('이미지 삭제 실패');
+      if (!response.success) {
+        throw new Error(response.message || '이미지 삭제 실패');
       }
 
-      setProfileImage(null);
-      setImageModified(true); //이미지 변경
-      console.log('✅ 프로필 이미지 삭제 성공');
+      // 프로필 이미지 상태 초기화
+      clearProfileImage(userId);
+
+      // useAuth의 사용자 정보 업데이트
+      if (setUser && user) {
+        setUser({
+          ...user,
+          profileImg: null,
+        });
+      }
+
+      // 이벤트 발생
+      window.dispatchEvent(
+        new CustomEvent('profile:updated', {
+          detail: { profileImg: null },
+        })
+      );
     } catch (error) {
-      console.error('이미지 삭제 에러:', error);
       alert('이미지 삭제에 실패했습니다.');
     }
   };
 
-  const handleCancel = () => {
-    if (imageModified) {
-      if (window.confirm('변경사항을 저장하시겠습니까?')) {
-        handleSaveAndClose();
-      } else {
-        onClose();
-      }
-    } else {
-      onClose();
-    }
-  };
+  if (isLoading) {
+    return <div className="text-center py-4">로딩 중...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-4 text-red-500">오류 발생: {error}</div>
+    );
+  }
 
   return (
     <div
       className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
-      onClick={handleCancel}
+      onClick={onClose}
     >
-      <button onClick={handleCancel} className="absolute top-3 right-3">
+      <button onClick={onClose} className="absolute top-3 right-3">
         <img
           src="/assets/icons/cancel.svg"
           className="w-7 h-7 hover:opacity-60 transition-colors brightness-0 invert-[1]"
@@ -114,19 +191,11 @@ const Profile = ({ onClose }) => {
       >
         <div className="flex flex-col items-center p-8">
           <div className="w-24 h-24 rounded-full overflow-hidden mb-4">
-            {profileImage ? (
-              <img
-                src={profileImage}
-                alt="Profile"
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <img
-                src="/assets/icons/profile.svg"
-                alt="Default Profile"
-                className="w-full h-full object-cover bg-gray-200"
-              />
-            )}
+            <img
+              src={currentProfileImage}
+              alt="Profile"
+              className="w-full h-full object-cover"
+            />
           </div>
           <h2 className="text-xl font-semibold">{email}</h2>
         </div>
@@ -136,7 +205,7 @@ const Profile = ({ onClose }) => {
             ref={inputRef}
             type="file"
             accept="image/*"
-            onChange={e => handleFile(e.target.files[0])}
+            onChange={handleFileChange}
             className="hidden"
             id="fileInput"
           />

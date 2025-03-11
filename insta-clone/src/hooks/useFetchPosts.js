@@ -1,66 +1,120 @@
-import { useState, useEffect, useRef } from 'react';
-import apiClient from '@/services/apiClient'; // ky 인스턴스 가져오기
+import { useEffect, useRef } from 'react';
+import apiClient from '@/services/apiClient';
+import usePostStore from '@/store/usePostStore';
 
 const useFetchPosts = () => {
-  const [posts, setPosts] = useState([]); // ✅ 피드 데이터
-  const [page, setPage] = useState(1); // 🔹 페이지 번호 추가
-  const [isLoading, setLoading] = useState(false); // 🔹 중복 호출 방지
-  const [hasMore, setHasMore] = useState(true); // 🔹 더 이상 불러올 데이터 없을 때 중지
+  // Zustand 스토어에서 상태와 액션 가져오기
+  const {
+    posts,
+    isLoading,
+    hasMore,
+    page,
+    setPosts,
+    setLoading,
+    setHasMore,
+    incrementPage,
+  } = usePostStore();
+
   const observerRef = useRef(null);
   const observerInstance = useRef(null);
 
-  // 🔹 API에서 피드 데이터 불러오기 (ky 사용)
-  const fetchPosts = async (page = 1) => {
+  // ✅ API에서 피드 데이터 불러오기
+  const fetchPosts = async () => {
+    if (isLoading || !hasMore) return;
+    setLoading(true);
+
     try {
-      const response = await apiClient.get('api/posts', {
-        searchParams: { page },
-      });
+      const response = await apiClient
+        .get('api/posts', { searchParams: { page } })
+        .json();
 
-      const data = await response.json();
-      console.log('📢 [useFetchPosts] 불러온 게시물:', data);
+      // ✅ 올바른 데이터 구조인지 확인
+      if (!response.success || !Array.isArray(response.data)) {
+        throw new Error('잘못된 API 응답 형식: 데이터가 배열이 아닙니다.');
+      }
 
-      return data;
+      if (response.data.length === 0) {
+        setHasMore(false);
+        // Observer 연결 해제
+        if (observerInstance.current) {
+          observerInstance.current.disconnect();
+        }
+      } else {
+        // ✅ 중복 게시물 필터링 및 상태 업데이트
+        const newPosts = response.data.filter(
+          newPost => !posts.some(post => post.postId === newPost.postId)
+        );
+
+        // 새로운 게시물이 없으면 더 이상 불러올 데이터가 없는 것으로 간주
+        if (newPosts.length === 0) {
+          setHasMore(false);
+          // Observer 연결 해제
+          if (observerInstance.current) {
+            observerInstance.current.disconnect();
+          }
+        } else {
+          // 기존 게시물과 새 게시물 합치기
+          setPosts([...posts, ...newPosts]);
+          incrementPage();
+        }
+      }
     } catch (error) {
-      console.error('❌ 피드 데이터를 불러오는 중 오류 발생:', error);
+      setHasMore(false);
+      // Observer 연결 해제
+      if (observerInstance.current) {
+        observerInstance.current.disconnect();
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
-  // 🔹 첫 번째 페이지 로드
-  // 🔹 첫 번째 페이지 로드
+  // ✅ 첫 번째 페이지 로드
   useEffect(() => {
-    fetchPosts().then(data => {
-      if (data) {
-        setPosts(data);
-      } else {
-        console.warn('⚠️ [useFetchPosts] 불러온 데이터가 없음!');
-      }
-    });
+    // 컴포넌트 마운트 시 상태 초기화 및 데이터 로드
+    if (posts.length === 0) {
+      fetchPosts();
+    }
   }, []);
 
-  // 🔹 Intersection Observer를 사용한 무한 스크롤 구현
+  // ✅ Intersection Observer를 사용한 무한 스크롤
   useEffect(() => {
-    if (!observerRef.current || !hasMore) return;
+    const currentObserverRef = observerRef.current;
 
-    if (observerInstance.current) observerInstance.current.disconnect();
+    // hasMore가 false면 Observer를 설정하지 않음
+    if (!currentObserverRef || !hasMore) {
+      if (observerInstance.current) {
+        observerInstance.current.disconnect();
+        observerInstance.current = null;
+      }
+      return;
+    }
+
+    // 이전 옵저버 정리
+    if (observerInstance.current) {
+      observerInstance.current.disconnect();
+    }
 
     observerInstance.current = new IntersectionObserver(
       entries => {
-        if (entries[0].isIntersecting && !isLoading) {
-          console.log('🔍 [INFO] Observer 트리거됨 - 추가 데이터 로드');
-          //fetchPosts();
+        if (entries[0].isIntersecting && !isLoading && hasMore) {
+          fetchPosts();
         }
       },
-      { threshold: 1.0 }
+      { threshold: 0.1 }
     );
 
-    observerInstance.current.observe(observerRef.current);
+    observerInstance.current.observe(currentObserverRef);
 
     return () => {
-      if (observerInstance.current) observerInstance.current.disconnect();
+      if (observerInstance.current) {
+        observerInstance.current.disconnect();
+        observerInstance.current = null;
+      }
     };
-  }, [posts, hasMore, isLoading]);
+  }, [isLoading, hasMore, posts]);
 
-  return { posts, observerRef, isLoading };
+  return { posts, observerRef, isLoading, hasMore };
 };
 
 export default useFetchPosts;

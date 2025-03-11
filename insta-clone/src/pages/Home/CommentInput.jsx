@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import useComments from '@/hooks/useComments'; // useComments 훅 사용
 
-const CommentInput = ({ postId }) => {
+const CommentInput = ({ postId, onCommentAdded }) => {
   const [newComment, setNewComment] = useState('');
   const isSubmitting = useRef(false);
   const isComposing = useRef(false);
@@ -14,6 +14,13 @@ const CommentInput = ({ postId }) => {
     isSubmitting.current = true;
     await addComment(newComment);
     setNewComment('');
+
+    // 댓글 추가 후 콜백 함수 호출 (약간의 지연 추가)
+    if (onCommentAdded && typeof onCommentAdded === 'function') {
+      setTimeout(() => {
+        onCommentAdded();
+      }, 300);
+    }
 
     setTimeout(() => {
       isSubmitting.current = false;
@@ -28,6 +35,14 @@ const CommentInput = ({ postId }) => {
         value={newComment}
         onChange={e => setNewComment(e.target.value)}
         className="w-full text-sm focus:outline-none p-1"
+        onKeyPress={e => {
+          if (e.key === 'Enter' && !isComposing.current) {
+            e.preventDefault();
+            handleAddComment();
+          }
+        }}
+        onCompositionStart={() => (isComposing.current = true)}
+        onCompositionEnd={() => (isComposing.current = false)}
       />
       <button
         onClick={handleAddComment}

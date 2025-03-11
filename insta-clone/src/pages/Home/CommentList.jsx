@@ -1,24 +1,24 @@
-import useComments from '@/hooks/useComments';
-
-const CommentList = ({ postId, currentUser }) => {
-  const { commentList, deleteComment } = useComments({ postId, currentUser });
-
+const CommentList = ({
+  postId,
+  currentUser,
+  commentList = [],
+  onDeleteComment,
+}) => {
   return (
-    <div className="mt-2">
+    <div className="mt-2 space-y-2">
       {commentList?.length > 0 ? (
         commentList.map(comment => (
-          <div
-            key={`${comment.id}-${comment.text}`}
-            className="flex justify-between items-center"
-          >
-            <p className="text-sm">
-              <span className="font-bold">{comment.email}</span>&nbsp;
-              {comment.text}
-            </p>
-            {currentUser.email === comment.email && (
+          <div key={comment.id} className="flex items-start">
+            <div className="flex-1">
+              <p className="text-sm">
+                <span className="font-bold">{comment.userId}</span>&nbsp;
+                {comment.comment}
+              </p>
+            </div>
+            {currentUser?.email === comment.userId && (
               <button
-                className="text-red-500 text-xs ml-2"
-                onClick={() => deleteComment(comment.id)}
+                className="text-red-500 text-xs ml-2 flex-shrink-0 whitespace-nowrap"
+                onClick={() => onDeleteComment(comment.id)}
               >
                 삭제
               </button>
