@@ -35,23 +35,58 @@ function useAuth() {
 
         if (jsonResponse.success && jsonResponse.data) {
           // 사용자 데이터 안전하게 추출
-          const userData = jsonResponse.data.user || jsonResponse.data;
+          let userData = null;
 
-          // 사용자 데이터가 유효한지 확인
-          if (userData && userData.email) {
-            console.log('[useAuth] 사용자 정보 설정:', userData.email);
-            setUser(userData);
-            setIsAuthenticated(true);
-
-            // 현재 로그인 페이지에 있다면 홈으로 리디렉션
-            if (window.location.pathname === '/login') {
-              console.log('[useAuth] 로그인 페이지에서 홈으로 리디렉션');
-              window.location.replace('/');
+          // 데이터 구조 확인 및 안전하게 추출
+          if (typeof jsonResponse.data === 'object') {
+            if (jsonResponse.data.user) {
+              userData = jsonResponse.data.user;
+            } else if (
+              Array.isArray(jsonResponse.data) &&
+              jsonResponse.data.length > 0
+            ) {
+              userData = jsonResponse.data[0];
+            } else {
+              userData = jsonResponse.data;
             }
           } else {
-            console.error('[useAuth] 유효하지 않은 사용자 데이터:', userData);
+            console.error(
+              '[useAuth] 예상치 못한 데이터 형식:',
+              jsonResponse.data
+            );
             setUser(null);
             setIsAuthenticated(false);
+            isCheckingRef.current = false;
+            return;
+          }
+
+          // 사용자 데이터가 유효한지 확인
+          if (!userData) {
+            console.error(
+              '[useAuth] 사용자 데이터가 없습니다:',
+              jsonResponse.data
+            );
+            setUser(null);
+            setIsAuthenticated(false);
+            isCheckingRef.current = false;
+            return;
+          }
+
+          // 필수 필드 확인
+          if (!userData.email) {
+            console.error('[useAuth] 사용자 이메일이 없습니다:', userData);
+            // 이메일이 없어도 계속 진행 (임시 이메일 할당)
+            userData.email = 'temp@example.com';
+          }
+
+          console.log('[useAuth] 사용자 정보 설정:', userData.email);
+          setUser(userData);
+          setIsAuthenticated(true);
+
+          // 현재 로그인 페이지에 있다면 홈으로 리디렉션
+          if (window.location.pathname === '/login') {
+            console.log('[useAuth] 로그인 페이지에서 홈으로 리디렉션');
+            window.location.replace('/');
           }
         } else {
           console.log('[useAuth] 인증 실패');
@@ -128,12 +163,31 @@ function useAuth() {
           console.log('로그인 API 응답 성공:', jsonResponse.data);
 
           // 사용자 데이터 확인 및 안전하게 설정
-          const userData = jsonResponse.data.user || jsonResponse.data;
+          let userData = null;
+
+          // 데이터 구조 확인 및 안전하게 추출
+          if (typeof jsonResponse.data === 'object') {
+            if (jsonResponse.data.user) {
+              userData = jsonResponse.data.user;
+            } else {
+              userData = jsonResponse.data;
+            }
+          } else {
+            console.error('예상치 못한 데이터 형식:', jsonResponse.data);
+            throw new Error('서버 응답 형식 오류');
+          }
 
           // 사용자 데이터가 유효한지 확인
-          if (!userData || !userData.email) {
-            console.error('유효하지 않은 사용자 데이터:', userData);
+          if (!userData) {
+            console.error('사용자 데이터가 없습니다:', jsonResponse.data);
             throw new Error('유효하지 않은 사용자 데이터');
+          }
+
+          // 필수 필드 확인
+          if (!userData.email) {
+            console.error('사용자 이메일이 없습니다:', userData);
+            // 이메일이 없어도 계속 진행 (임시 이메일 할당)
+            userData.email = 'temp@example.com';
           }
 
           // 사용자 상태 즉시 업데이트
