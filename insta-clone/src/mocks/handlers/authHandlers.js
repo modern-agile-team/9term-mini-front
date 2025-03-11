@@ -26,6 +26,22 @@ const getSessionUser = () => {
   return cookie ? JSON.parse(decodeURIComponent(cookie.split('=')[1])) : null;
 };
 
+// ✅ 쿠키 설정 함수
+const setSessionCookie = userData => {
+  // 쿠키 만료 시간 설정 (예: 7일)
+  const expirationDate = new Date();
+  expirationDate.setDate(expirationDate.getDate() + 7);
+
+  // 쿠키 설정
+  document.cookie = `sessionUser=${encodeURIComponent(JSON.stringify(userData))}; expires=${expirationDate.toUTCString()}; path=/; SameSite=Lax`;
+};
+
+// ✅ 쿠키 삭제 함수
+const clearSessionCookie = () => {
+  document.cookie =
+    'sessionUser=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+};
+
 // ✅ 회원가입
 const registerHandler = http.post('api/register', async ({ request }) => {
   try {
@@ -70,12 +86,14 @@ const registerHandler = http.post('api/register', async ({ request }) => {
 // ✅ 로그인
 const loginHandler = http.post('api/login', async ({ request }) => {
   try {
-    const reqBody = await request.json();
-    const { email, pwd } = reqBody;
+    const { email, pwd } = await request.json();
 
     if (!email || !pwd) {
       return HttpResponse.json(
-        { success: false, message: '이메일과 비밀번호는 필수입니다.' },
+        {
+          success: false,
+          message: '이메일과 비밀번호는 필수입니다.',
+        },
         { status: 400 }
       );
     }
@@ -109,8 +127,8 @@ const loginHandler = http.post('api/login', async ({ request }) => {
       profileImg: user.profileImg,
     };
 
-    // 세션에 사용자 정보 저장
-    sessionStorage.setItem('sessionUser', JSON.stringify(userData));
+    // 쿠키에 사용자 정보 저장
+    setSessionCookie(userData);
 
     return HttpResponse.json({
       success: true,
@@ -128,27 +146,20 @@ const loginHandler = http.post('api/login', async ({ request }) => {
 // ✅ 현재 로그인한 사용자 정보
 const getMeHandler = http.get('api/users/me', async () => {
   try {
-    const sessionUser = sessionStorage.getItem('sessionUser');
+    // 쿠키에서 세션 정보 가져오기
+    const sessionUser = getSessionUser();
+
     if (!sessionUser) {
       return HttpResponse.json(
-        { success: false, message: '로그인이 필요합니다.' },
+        { success: false, message: '인증되지 않은 사용자입니다.' },
         { status: 401 }
       );
     }
 
-    const user = JSON.parse(sessionUser);
-
     return HttpResponse.json({
       success: true,
       message: '사용자 정보 조회 성공',
-      data: [
-        {
-          id: user.id,
-          email: user.email,
-          profileImg: user.profileImg,
-          name: user.name,
-        },
-      ],
+      data: [sessionUser],
     });
   } catch (error) {
     return HttpResponse.json(
@@ -159,21 +170,14 @@ const getMeHandler = http.get('api/users/me', async () => {
 });
 
 // ✅ 로그아웃
-const logoutHandler = http.post('api/logout', async () => {
-  try {
-    const sessionUser = sessionStorage.getItem('sessionUser');
-    sessionStorage.removeItem('sessionUser');
+const logoutHandler = http.post('api/logout', () => {
+  // 쿠키에서 세션 정보 삭제
+  clearSessionCookie();
 
-    return HttpResponse.json({
-      success: true,
-      message: sessionUser ? '로그아웃 성공' : '이미 로그아웃 상태입니다.',
-    });
-  } catch (error) {
-    return HttpResponse.json(
-      { success: false, message: '로그아웃 실패' },
-      { status: 500 }
-    );
-  }
+  return HttpResponse.json({
+    success: true,
+    message: '로그아웃 성공',
+  });
 });
 
 // ✅ 프로필 이미지 수정
@@ -181,26 +185,35 @@ const profileHandler = http.patch('api/users/me', async ({ request }) => {
   try {
     const reqBody = await request.json();
     const { profileImg } = reqBody;
-    const user = JSON.parse(sessionStorage.getItem('sessionUser'));
+
+    // 쿠키에서 사용자 정보 가져오기
+    const sessionUser = getSessionUser();
+
+    if (!sessionUser) {
+      return HttpResponse.json(
+        { success: false, message: '인증되지 않은 사용자입니다.' },
+        { status: 401 }
+      );
+    }
 
     // 사용자 객체 업데이트
-    user.profileImg = profileImg;
+    sessionUser.profileImg = profileImg;
 
     // users 배열에서 해당 사용자 업데이트
-    const userIndex = users.findIndex(u => u.id === user.id);
+    const userIndex = users.findIndex(u => u.id === sessionUser.id);
     if (userIndex !== -1) {
       users[userIndex].profileImg = profileImg;
     }
 
-    // 세션 스토리지 업데이트
-    sessionStorage.setItem('sessionUser', JSON.stringify(user));
+    // 쿠키 업데이트
+    setSessionCookie(sessionUser);
 
     return HttpResponse.json({
       success: true,
       message: '프로필 이미지가 성공적으로 업데이트되었습니다.',
       data: {
-        userEmail: user.email,
-        profileImg: user.profileImg,
+        userEmail: sessionUser.email,
+        profileImg: sessionUser.profileImg,
       },
     });
   } catch (error) {
@@ -214,8 +227,17 @@ const profileHandler = http.patch('api/users/me', async ({ request }) => {
 // ✅ 프로필 이미지 삭제
 const profileDeleteHandler = http.delete('api/users/me', async () => {
   try {
-    const user = JSON.parse(sessionStorage.getItem('sessionUser'));
-    if (!user.profileImg) {
+    // 쿠키에서 사용자 정보 가져오기
+    const sessionUser = getSessionUser();
+
+    if (!sessionUser) {
+      return HttpResponse.json(
+        { success: false, message: '인증되지 않은 사용자입니다.' },
+        { status: 401 }
+      );
+    }
+
+    if (!sessionUser.profileImg) {
       return HttpResponse.json(
         {
           success: false,
@@ -226,22 +248,22 @@ const profileDeleteHandler = http.delete('api/users/me', async () => {
     }
 
     // 사용자 객체 업데이트
-    user.profileImg = null;
+    sessionUser.profileImg = null;
 
     // users 배열에서 해당 사용자 업데이트
-    const userIndex = users.findIndex(u => u.id === user.id);
+    const userIndex = users.findIndex(u => u.id === sessionUser.id);
     if (userIndex !== -1) {
       users[userIndex].profileImg = null;
     }
 
-    // 세션 스토리지 업데이트
-    sessionStorage.setItem('sessionUser', JSON.stringify(user));
+    // 쿠키 업데이트
+    setSessionCookie(sessionUser);
 
     return HttpResponse.json({
       success: true,
       message: '프로필 이미지가 성공적으로 삭제되었습니다.',
       data: {
-        userEmail: user.email,
+        userEmail: sessionUser.email,
         profileImg: null,
       },
     });

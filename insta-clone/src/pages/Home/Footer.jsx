@@ -1,13 +1,12 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import useAuth from '@/hooks/useAuth';
 
 const Footer = () => {
   const { logout } = useAuth();
-  const navigate = useNavigate();
 
   const handleLogout = async () => {
     await logout();
-    navigate('/login', { replace: true }); // ✅ 뒤로가기 방지
+    // useAuth의 logout 함수에서 리디렉션을 처리하므로 여기서는 제거
   };
 
   return (

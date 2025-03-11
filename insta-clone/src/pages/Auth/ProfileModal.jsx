@@ -19,31 +19,7 @@ const Profile = ({ onClose }) => {
         setIsLoading(true);
         setError(null);
 
-        // 세션 스토리지에서 직접 사용자 정보 확인
-        const sessionUser = sessionStorage.getItem('sessionUser');
-        if (sessionUser) {
-          try {
-            const sessionUserData = JSON.parse(sessionUser);
-
-            if (sessionUserData && sessionUserData.email) {
-              setEmail(sessionUserData.email);
-              setUserId(sessionUserData.id);
-
-              if (sessionUserData.profileImg) {
-                setProfileImage(sessionUserData.id, sessionUserData.profileImg);
-              } else {
-                setProfileImage(sessionUserData.id, null);
-              }
-
-              setIsLoading(false);
-              return;
-            }
-          } catch (error) {
-            // 세션 스토리지 파싱 실패 처리
-          }
-        }
-
-        // useAuth에서 이미 사용자 정보를 가져왔다면 그것을 사용
+        // user 객체에서 사용자 정보 확인
         if (user) {
           setEmail(user.email);
           setUserId(user.id);
@@ -127,21 +103,16 @@ const Profile = ({ onClose }) => {
           throw new Error(response.message || '프로필 이미지 업로드 실패');
         }
 
-        // 세션 스토리지에서 사용자 정보 업데이트
-        const sessionUser = sessionStorage.getItem('sessionUser');
-        if (sessionUser) {
-          const userData = JSON.parse(sessionUser);
-          userData.profileImg = imageDataUrl;
-          sessionStorage.setItem('sessionUser', JSON.stringify(userData));
-
-          // useAuth의 사용자 정보도 업데이트
-          if (setUser) {
-            setUser({ ...userData });
-          }
-        }
-
         // 프로필 이미지 상태 업데이트
         setProfileImage(userId, imageDataUrl);
+
+        // useAuth의 사용자 정보 업데이트
+        if (setUser && user) {
+          setUser({
+            ...user,
+            profileImg: imageDataUrl,
+          });
+        }
 
         // 이벤트 발생
         window.dispatchEvent(
@@ -173,17 +144,12 @@ const Profile = ({ onClose }) => {
       // 프로필 이미지 상태 초기화
       clearProfileImage(userId);
 
-      // 세션 스토리지에서 사용자 정보 업데이트
-      const sessionUser = sessionStorage.getItem('sessionUser');
-      if (sessionUser) {
-        const userData = JSON.parse(sessionUser);
-        userData.profileImg = null;
-        sessionStorage.setItem('sessionUser', JSON.stringify(userData));
-
-        // useAuth의 사용자 정보도 업데이트
-        if (setUser) {
-          setUser({ ...userData });
-        }
+      // useAuth의 사용자 정보 업데이트
+      if (setUser && user) {
+        setUser({
+          ...user,
+          profileImg: null,
+        });
       }
 
       // 이벤트 발생

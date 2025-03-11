@@ -1,26 +1,11 @@
 import ky from 'ky';
 
-// 세션 스토리지나 로컬 스토리지에서 사용자 정보 확인
-const getUserFromStorage = () => {
-  const sessionUser = sessionStorage.getItem('sessionUser');
-  if (sessionUser && sessionUser !== 'undefined') {
-    return JSON.parse(sessionUser);
-  }
-
-  const localUser = localStorage.getItem('user');
-  if (localUser && localUser !== 'undefined') {
-    return JSON.parse(localUser);
-  }
-
-  return null;
-};
-
 const apiClient = ky.create({
   prefixUrl: '', // 기본 URL 접두사는 비워둠 (Vite 프록시가 처리)
   headers: {
     'Content-Type': 'application/json',
   },
-  credentials: 'include',
+  credentials: 'include', // 쿠키를 자동으로 포함시킵니다
   timeout: 30000, // 30초 타임아웃 설정
   retry: {
     limit: 2, // 최대 2번 재시도
@@ -29,16 +14,7 @@ const apiClient = ky.create({
   hooks: {
     beforeRequest: [
       request => {
-        const token = sessionStorage.getItem('token'); // ✅ 토큰 가져오기
-        if (token) {
-          request.headers.set('Authorization', `Bearer ${token}`);
-        }
-
-        // 사용자 정보가 있으면 요청 헤더에 추가
-        const user = getUserFromStorage();
-        if (user && user.id) {
-          request.headers.set('X-User-ID', user.id);
-        }
+        // 필요한 경우 여기에 추가 헤더를 설정할 수 있습니다
       },
     ],
     afterResponse: [
@@ -50,10 +26,6 @@ const apiClient = ky.create({
 
         // 인증 오류 처리 (401)
         if (response.status === 401) {
-          // 세션 만료 처리
-          sessionStorage.removeItem('sessionUser');
-          localStorage.removeItem('user');
-
           // 로그인 페이지가 아닌 경우에만 리디렉션
           if (window.location.pathname !== '/login') {
             window.location.replace('/login');

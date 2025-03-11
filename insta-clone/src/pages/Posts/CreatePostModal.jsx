@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import apiClient from '@/services/apiClient';
 import usePostStore from '@/store/usePostStore';
+import useAuth from '@/hooks/useAuth';
 
 const CreatePostModal = ({ onClose, postId, initialData = {} }) => {
   const [dragActive, setDragActive] = useState(false);
@@ -13,6 +14,7 @@ const CreatePostModal = ({ onClose, postId, initialData = {} }) => {
 
   // Zustand 스토어에서 액션 가져오기
   const { addPost, updatePost } = usePostStore();
+  const { user } = useAuth();
 
   // postId가 있을 경우 기존 게시물 불러오기
   useEffect(() => {
@@ -156,9 +158,7 @@ const CreatePostModal = ({ onClose, postId, initialData = {} }) => {
           content: caption,
           postImg: selectedImage,
           createdAt: new Date().toISOString(),
-          author:
-            JSON.parse(sessionStorage.getItem('sessionUser'))?.email ||
-            'unknown',
+          author: user?.email || 'unknown',
           likedBy: [],
         };
         addPost(newPost);

@@ -36,11 +36,17 @@ let comments = [
   },
 ];
 
-// 세션에서 사용자 가져오기
+// 쿠키에서 사용자 가져오기
 const getSessionUser = () => {
-  const sessionUser = sessionStorage.getItem('sessionUser');
+  const cookie = document.cookie
+    .split('; ')
+    .find(row => row.startsWith('sessionUser='));
+
+  const sessionUser = cookie
+    ? JSON.parse(decodeURIComponent(cookie.split('=')[1]))
+    : null;
   console.log('🔍 [MSW] 세션 사용자 확인:', sessionUser ? '있음' : '없음');
-  return sessionUser ? JSON.parse(sessionUser) : null;
+  return sessionUser;
 };
 
 // ✅ 특정 게시물의 댓글 목록 조회

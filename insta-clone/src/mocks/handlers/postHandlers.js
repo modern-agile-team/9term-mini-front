@@ -27,10 +27,13 @@ let posts = [
   },
 ];
 
-// ✅ 세션에서 사용자 정보 가져오기
+// ✅ 쿠키에서 사용자 정보 가져오기
 const getSessionUser = () => {
-  const sessionUser = sessionStorage.getItem('sessionUser');
-  return sessionUser ? JSON.parse(sessionUser) : null;
+  const cookie = document.cookie
+    .split('; ')
+    .find(row => row.startsWith('sessionUser='));
+
+  return cookie ? JSON.parse(decodeURIComponent(cookie.split('=')[1])) : null;
 };
 
 // ✅ 새로운 postId 생성 함수
