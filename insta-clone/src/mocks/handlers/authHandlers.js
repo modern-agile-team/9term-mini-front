@@ -19,11 +19,24 @@ let users = [
 
 // ✅ `document.cookie`에서 사용자 세션 가져오기
 const getSessionUser = () => {
+  console.log('[MSW] 모든 쿠키:', document.cookie);
+
   const cookie = document.cookie
     .split('; ')
     .find(row => row.startsWith('sessionUser='));
 
-  return cookie ? JSON.parse(decodeURIComponent(cookie.split('=')[1])) : null;
+  console.log('[MSW] sessionUser 쿠키:', cookie || '없음');
+
+  if (!cookie) return null;
+
+  try {
+    const decodedCookie = decodeURIComponent(cookie.split('=')[1]);
+    const user = JSON.parse(decodedCookie);
+    return user;
+  } catch (error) {
+    console.error('[MSW] 쿠키 파싱 오류:', error);
+    return null;
+  }
 };
 
 // ✅ 쿠키 설정 함수
@@ -32,8 +45,11 @@ const setSessionCookie = userData => {
   const expirationDate = new Date();
   expirationDate.setDate(expirationDate.getDate() + 7);
 
-  // 쿠키 설정
-  document.cookie = `sessionUser=${encodeURIComponent(JSON.stringify(userData))}; expires=${expirationDate.toUTCString()}; path=/; SameSite=Lax`;
+  // 쿠키 설정 (SameSite=None, Secure 옵션 제거하여 로컬 개발 환경에서 작동하도록)
+  const cookieValue = encodeURIComponent(JSON.stringify(userData));
+  document.cookie = `sessionUser=${cookieValue}; expires=${expirationDate.toUTCString()}; path=/`;
+
+  console.log('쿠키 설정됨:', document.cookie);
 };
 
 // ✅ 쿠키 삭제 함수
@@ -87,6 +103,7 @@ const registerHandler = http.post('api/register', async ({ request }) => {
 const loginHandler = http.post('api/login', async ({ request }) => {
   try {
     const { email, pwd } = await request.json();
+    console.log(`[MSW] 로그인 시도: ${email}`);
 
     if (!email || !pwd) {
       return HttpResponse.json(
@@ -101,6 +118,7 @@ const loginHandler = http.post('api/login', async ({ request }) => {
     const user = users.find(u => u.email === email);
 
     if (!user) {
+      console.log(`[MSW] 로그인 실패: 존재하지 않는 이메일 - ${email}`);
       return HttpResponse.json(
         {
           success: false,
@@ -111,6 +129,7 @@ const loginHandler = http.post('api/login', async ({ request }) => {
     }
 
     if (user.pwd !== pwd) {
+      console.log(`[MSW] 로그인 실패: 비밀번호 불일치 - ${email}`);
       return HttpResponse.json(
         {
           success: false,
@@ -130,12 +149,15 @@ const loginHandler = http.post('api/login', async ({ request }) => {
     // 쿠키에 사용자 정보 저장
     setSessionCookie(userData);
 
+    console.log(`[MSW] 로그인 성공: ${email}`);
+
     return HttpResponse.json({
       success: true,
       message: '로그인 성공',
       data: { user: userData },
     });
   } catch (error) {
+    console.error('[MSW] 로그인 오류:', error);
     return HttpResponse.json(
       { success: false, message: '서버 오류가 발생했습니다.' },
       { status: 500 }
@@ -148,20 +170,27 @@ const getMeHandler = http.get('api/users/me', async () => {
   try {
     // 쿠키에서 세션 정보 가져오기
     const sessionUser = getSessionUser();
+    console.log(
+      '[MSW] /api/users/me 호출됨, 세션 사용자:',
+      sessionUser ? '있음' : '없음'
+    );
 
     if (!sessionUser) {
+      console.log('[MSW] 인증되지 않은 사용자');
       return HttpResponse.json(
         { success: false, message: '인증되지 않은 사용자입니다.' },
         { status: 401 }
       );
     }
 
+    console.log('[MSW] 인증된 사용자:', sessionUser.email);
     return HttpResponse.json({
       success: true,
       message: '사용자 정보 조회 성공',
       data: [sessionUser],
     });
   } catch (error) {
+    console.error('[MSW] 사용자 정보 조회 오류:', error);
     return HttpResponse.json(
       { success: false, message: '서버 오류가 발생했습니다.' },
       { status: 500 }

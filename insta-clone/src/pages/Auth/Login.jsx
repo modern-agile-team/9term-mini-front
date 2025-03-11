@@ -25,11 +25,34 @@ const Login = () => {
 
   // 사용자가 이미 인증되어 있다면 자동으로 홈으로 리디렉션
   useEffect(() => {
+    console.log('인증 상태 변경:', isAuthenticated);
+
     if (isAuthenticated) {
+      console.log('인증됨, 홈으로 이동합니다.');
       // 강제로 홈으로 이동
-      window.location.href = '/';
+      window.location.replace('/');
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated]);
+
+  // 페이지 로드 시 한 번 더 체크
+  useEffect(() => {
+    const checkAndRedirect = async () => {
+      try {
+        // 쿠키 확인
+        const hasCookie = document.cookie.includes('sessionUser=');
+        console.log('쿠키 확인:', hasCookie ? '있음' : '없음');
+
+        if (hasCookie || isAuthenticated) {
+          console.log('쿠키 또는 인증 상태 확인됨, 홈으로 이동합니다.');
+          window.location.replace('/');
+        }
+      } catch (error) {
+        console.error('리디렉션 체크 오류:', error);
+      }
+    };
+
+    checkAndRedirect();
+  }, []);
 
   // 로딩 상태가 너무 오래 지속되지 않도록 타임아웃 설정
   useEffect(() => {
@@ -65,21 +88,24 @@ const Login = () => {
 
       if (success) {
         setIsRedirecting(true);
+        console.log('로그인 성공, 홈으로 이동합니다.');
 
-        // 강제로 홈으로 이동 (페이지 새로고침)
+        // 로그인 성공 이벤트 발생
+        window.dispatchEvent(new CustomEvent('auth:loginSuccess'));
+
+        // 강제로 홈으로 이동
+        window.location.replace('/');
+
+        // 백업 리디렉션 - 위 방법이 실패할 경우를 대비
         setTimeout(() => {
-          // 로그인 성공 이벤트 발생
-          window.dispatchEvent(new CustomEvent('auth:loginSuccess'));
-          // 홈으로 이동
-          window.location.replace('/');
-        }, 500);
+          window.location.href = '/';
+        }, 1000);
       } else {
         setIsLoading(false);
       }
     } catch (error) {
       setError(error.message || '로그인에 실패했습니다. 다시 시도해주세요.');
       setIsLoading(false);
-      setIsRedirecting(false);
     }
   };
 
