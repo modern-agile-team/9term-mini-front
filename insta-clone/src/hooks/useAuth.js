@@ -34,15 +34,24 @@ function useAuth() {
         console.log('[useAuth] API 응답 데이터:', jsonResponse);
 
         if (jsonResponse.success && jsonResponse.data) {
-          const userData = jsonResponse.data.user || jsonResponse.data[0];
-          console.log('[useAuth] 사용자 정보 설정:', userData.email);
-          setUser(userData);
-          setIsAuthenticated(true);
+          // 사용자 데이터 안전하게 추출
+          const userData = jsonResponse.data.user || jsonResponse.data;
 
-          // 현재 로그인 페이지에 있다면 홈으로 리디렉션
-          if (window.location.pathname === '/login') {
-            console.log('[useAuth] 로그인 페이지에서 홈으로 리디렉션');
-            window.location.replace('/');
+          // 사용자 데이터가 유효한지 확인
+          if (userData && userData.email) {
+            console.log('[useAuth] 사용자 정보 설정:', userData.email);
+            setUser(userData);
+            setIsAuthenticated(true);
+
+            // 현재 로그인 페이지에 있다면 홈으로 리디렉션
+            if (window.location.pathname === '/login') {
+              console.log('[useAuth] 로그인 페이지에서 홈으로 리디렉션');
+              window.location.replace('/');
+            }
+          } else {
+            console.error('[useAuth] 유효하지 않은 사용자 데이터:', userData);
+            setUser(null);
+            setIsAuthenticated(false);
           }
         } else {
           console.log('[useAuth] 인증 실패');
@@ -118,8 +127,17 @@ function useAuth() {
         if (jsonResponse.success && jsonResponse.data) {
           console.log('로그인 API 응답 성공:', jsonResponse.data);
 
+          // 사용자 데이터 확인 및 안전하게 설정
+          const userData = jsonResponse.data.user || jsonResponse.data;
+
+          // 사용자 데이터가 유효한지 확인
+          if (!userData || !userData.email) {
+            console.error('유효하지 않은 사용자 데이터:', userData);
+            throw new Error('유효하지 않은 사용자 데이터');
+          }
+
           // 사용자 상태 즉시 업데이트
-          setUser(jsonResponse.data.user);
+          setUser(userData);
           setIsAuthenticated(true);
 
           // 로그인 성공 후 사용자 정보 가져오기
@@ -128,7 +146,7 @@ function useAuth() {
           // 로그인 이벤트 발생
           window.dispatchEvent(
             new CustomEvent('auth:login', {
-              detail: { user: jsonResponse.data.user },
+              detail: { user: userData },
             })
           );
 
