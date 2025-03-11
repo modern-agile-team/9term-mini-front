@@ -27,6 +27,19 @@ function useAuth() {
         return;
       }
 
+      // 로컬 스토리지에서 사용자 정보 확인
+      const localUser = localStorage.getItem('user');
+      const parsedLocalUser = localUser ? JSON.parse(localUser) : null;
+
+      if (parsedLocalUser) {
+        // 로컬 스토리지에 있는 사용자 정보를 세션 스토리지에 복원
+        sessionStorage.setItem('sessionUser', JSON.stringify(parsedLocalUser));
+        setUser(parsedLocalUser);
+        setIsAuthenticated(true);
+        isCheckingRef.current = false;
+        return;
+      }
+
       const response = await apiClient.get('api/users/me', {
         throwHttpErrors: false,
       });
@@ -40,6 +53,7 @@ function useAuth() {
           const userData = jsonResponse.data.user || jsonResponse.data[0];
 
           sessionStorage.setItem('sessionUser', JSON.stringify(userData));
+          localStorage.setItem('user', JSON.stringify(userData));
           setUser(userData);
           setIsAuthenticated(true);
         } else {
@@ -67,14 +81,35 @@ function useAuth() {
     const localUser = localStorage.getItem('user');
     const parsedLocalUser = localUser ? JSON.parse(localUser) : null;
 
+    // 리디렉션 플래그 확인
+    const shouldRedirectToHome = sessionStorage.getItem('shouldRedirectToHome');
+
     if (sessionUser) {
       setUser(sessionUser);
       setIsAuthenticated(true);
+
+      // 리디렉션 플래그가 있으면 홈으로 이동
+      if (
+        shouldRedirectToHome === 'true' &&
+        window.location.pathname === '/login'
+      ) {
+        sessionStorage.removeItem('shouldRedirectToHome');
+        window.location.href = '/';
+      }
     } else if (parsedLocalUser) {
       // 로컬 스토리지에 있는 사용자 정보를 세션 스토리지에 복원
       sessionStorage.setItem('sessionUser', JSON.stringify(parsedLocalUser));
       setUser(parsedLocalUser);
       setIsAuthenticated(true);
+
+      // 리디렉션 플래그가 있으면 홈으로 이동
+      if (
+        shouldRedirectToHome === 'true' &&
+        window.location.pathname === '/login'
+      ) {
+        sessionStorage.removeItem('shouldRedirectToHome');
+        window.location.href = '/';
+      }
     } else {
       checkAuth();
     }

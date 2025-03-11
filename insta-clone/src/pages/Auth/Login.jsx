@@ -25,8 +25,13 @@ const Login = () => {
 
   // 사용자가 이미 인증되어 있다면 자동으로 홈으로 리디렉션
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/', { replace: true });
+    // 세션 스토리지나 로컬 스토리지에 사용자 정보가 있는지 확인
+    const sessionUser = sessionStorage.getItem('sessionUser');
+    const localUser = localStorage.getItem('user');
+
+    if (isAuthenticated || sessionUser || localUser) {
+      // 강제로 홈으로 이동
+      window.location.href = '/';
     }
   }, [isAuthenticated, navigate]);
 
@@ -67,7 +72,12 @@ const Login = () => {
 
         // 강제로 홈으로 이동 (페이지 새로고침)
         setTimeout(() => {
-          window.location.href = '/';
+          // 세션 스토리지에 리디렉션 플래그 설정
+          sessionStorage.setItem('shouldRedirectToHome', 'true');
+          // 로그인 성공 이벤트 발생
+          window.dispatchEvent(new CustomEvent('auth:loginSuccess'));
+          // 홈으로 이동
+          window.location.replace('/');
         }, 500);
       } else {
         setIsLoading(false);
