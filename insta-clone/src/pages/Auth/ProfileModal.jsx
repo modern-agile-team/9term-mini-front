@@ -3,6 +3,44 @@ import apiClient from '@/services/apiClient';
 import useProfileStore from '@/store/useProfileStore';
 import useAuth from '@/hooks/useAuth';
 
+// 이미지 리사이징 함수 추가
+const resizeImage = (file, maxWidth = 800, maxHeight = 800, quality = 0.7) => {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = event => {
+      const img = new Image();
+      img.onload = () => {
+        // 이미지 크기 계산
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxWidth) {
+          height = (height * maxWidth) / width;
+          width = maxWidth;
+        }
+
+        if (height > maxHeight) {
+          width = (width * maxHeight) / height;
+          height = maxHeight;
+        }
+
+        // Canvas에 이미지 그리기
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // 이미지 데이터 URL 생성 (품질 조정)
+        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+        resolve(dataUrl);
+      };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+};
+
 const Profile = ({ onClose }) => {
   const inputRef = useRef(null);
   const { profileImages, setProfileImage, clearProfileImage } =
@@ -74,8 +112,8 @@ const Profile = ({ onClose }) => {
     currentProfileImage = user.profileImg;
   }
 
-  // 파일 선택 처리
-  const handleFileChange = e => {
+  // 파일 선택 처리 - 수정된 부분
+  const handleFileChange = async e => {
     const file = e.target.files[0];
     if (!file) {
       return;
@@ -86,50 +124,49 @@ const Profile = ({ onClose }) => {
       return;
     }
 
-    const reader = new FileReader();
+    try {
+      // 로딩 상태 표시
+      setIsLoading(true);
 
-    reader.onload = async event => {
-      const imageDataUrl = event.target.result;
+      // 이미지 리사이징 (최대 800x800, 품질 0.7)
+      const resizedImageDataUrl = await resizeImage(file, 800, 800, 0.7);
 
-      // 이미지 업로드 처리
-      try {
-        const response = await apiClient
-          .patch('api/users/me', {
-            json: { profileImg: imageDataUrl },
-          })
-          .json();
+      // 리사이징된 이미지로 API 호출
+      const response = await apiClient
+        .patch('api/users/me', {
+          json: { profileImg: resizedImageDataUrl },
+        })
+        .json();
 
-        if (!response.success) {
-          throw new Error(response.message || '프로필 이미지 업로드 실패');
-        }
-
-        // 프로필 이미지 상태 업데이트
-        setProfileImage(userId, imageDataUrl);
-
-        // useAuth의 사용자 정보 업데이트
-        if (setUser && user) {
-          setUser({
-            ...user,
-            profileImg: imageDataUrl,
-          });
-        }
-
-        // 이벤트 발생
-        window.dispatchEvent(
-          new CustomEvent('profile:updated', {
-            detail: { profileImg: imageDataUrl },
-          })
-        );
-      } catch (error) {
-        alert(error.message || '이미지 업로드에 실패했습니다.');
+      if (!response.success) {
+        throw new Error(response.message || '프로필 이미지 업로드 실패');
       }
-    };
 
-    reader.onerror = () => {
-      alert('파일을 읽는 중 오류가 발생했습니다.');
-    };
+      // 프로필 이미지 상태 업데이트
+      setProfileImage(userId, resizedImageDataUrl);
 
-    reader.readAsDataURL(file);
+      // useAuth의 사용자 정보 업데이트
+      if (setUser && user) {
+        setUser({
+          ...user,
+          profileImg: resizedImageDataUrl,
+        });
+      }
+
+      // 이벤트 발생
+      window.dispatchEvent(
+        new CustomEvent('profile:updated', {
+          detail: { profileImg: resizedImageDataUrl },
+        })
+      );
+
+      alert('프로필 이미지가 업로드되었습니다.');
+    } catch (error) {
+      alert(error.message || '이미지 업로드에 실패했습니다.');
+      console.error('이미지 업로드 오류:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // 이미지 삭제
