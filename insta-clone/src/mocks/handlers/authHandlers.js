@@ -53,10 +53,12 @@ const clearSessionCookie = () => {
 };
 
 // ✅ 이미지 요청 처리 핸들러 추가
-const imageHandlers = [
-  http.get('https://images.unsplash.com/photo-*', () => {
-    // 이미지 요청을 패스스루하여 실제 이미지를 가져오도록 함
-    return HttpResponse.json({ success: true }, { status: 200 });
+export const imageHandlers = [
+  http.get('https://images.unsplash.com/photo-*', ({ request }) => {
+    // 실제 이미지 URL로 패스스루 - MSW가 이 요청을 가로채지 않고 실제 Unsplash 서버로 전달
+    // 이렇게 하면 Unsplash의 실제 이미지를 가져올 수 있음
+    // 이 핸들러가 없으면 MSW가 모든 외부 요청을 가로채서 이미지가 엑박으로 표시됨
+    return HttpResponse.passthrough();
   }),
 ];
 
@@ -372,7 +374,7 @@ const getUserProfileHandler = http.get(
   }
 );
 
-// 인증 관련 핸들러
+// ✅ 모든 인증 관련 핸들러 내보내기
 export const authHandlers = [
   // ✅ 이미지 핸들러 추가
   ...imageHandlers,
