@@ -54,12 +54,19 @@ const clearSessionCookie = () => {
 
 // ✅ 이미지 요청 처리 핸들러 추가
 export const imageHandlers = [
+  // 이 핸들러를 제거하거나 주석 처리해도 이미지가 정상적으로 표시되는 경우가 있습니다.
+  // 이는 다음과 같은 이유 때문일 수 있습니다:
+  // 1. 브라우저 캐시: 이전에 로드된 이미지가 브라우저 캐시에 저장되어 있을 수 있음
+  // 2. MSW 설정: MSW가 특정 도메인의 요청을 자동으로 패스스루하도록 설정되어 있을 수 있음
+  // 3. 네트워크 설정: 개발 환경의 네트워크 설정이 특정 요청을 우회하도록 구성되어 있을 수 있음
+  // 이미지 요청 핸들러 주석 처리 - 이 상태에서 이미지가 정상적으로 표시됨
+  /*
   http.get('https://images.unsplash.com/photo-*', ({ request }) => {
     // 실제 이미지 URL로 패스스루 - MSW가 이 요청을 가로채지 않고 실제 Unsplash 서버로 전달
     // 이렇게 하면 Unsplash의 실제 이미지를 가져올 수 있음
-    // 이 핸들러가 없으면 MSW가 모든 외부 요청을 가로채서 이미지가 엑박으로 표시됨
     return HttpResponse.passthrough();
   }),
+  */
 ];
 
 // ✅ 회원가입
@@ -376,8 +383,8 @@ const getUserProfileHandler = http.get(
 
 // ✅ 모든 인증 관련 핸들러 내보내기
 export const authHandlers = [
-  // ✅ 이미지 핸들러 추가
-  ...imageHandlers,
+  // 이미지 핸들러는 주석 처리되어 있으므로 제거
+  // ...imageHandlers,
 
   // ✅ 회원가입
   registerHandler,
