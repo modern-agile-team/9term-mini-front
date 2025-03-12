@@ -96,13 +96,6 @@ function useAuth() {
   // 초기 마운트 시 인증 상태 확인
   useEffect(() => {
     checkAuth();
-
-    // 주기적으로 인증 상태 확인 (5분마다로 변경)
-    const interval = setInterval(() => {
-      checkAuth();
-    }, 300000); // 5분마다 확인 (30초에서 5분으로 변경)
-
-    return () => clearInterval(interval);
   }, [checkAuth]);
 
   // 프로필 이미지 업데이트 이벤트 리스너
