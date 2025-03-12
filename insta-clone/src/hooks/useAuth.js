@@ -10,28 +10,18 @@ function useAuth() {
     if (isCheckingRef.current) return;
     isCheckingRef.current = true;
 
-    console.log('[useAuth] 인증 상태 확인 중...');
-
     try {
       // 쿠키 확인
       const hasCookie = document.cookie.includes('sessionUser=');
-      console.log('[useAuth] 쿠키 확인:', hasCookie ? '있음' : '없음');
-
-      if (hasCookie) {
-        console.log('[useAuth] 쿠키 발견, 사용자 정보 요청 중...');
-      }
 
       const response = await apiClient.get('api/users/me', {
         throwHttpErrors: false,
       });
 
-      console.log('[useAuth] API 응답 상태:', response.status);
-
       // 응답이 JSON인지 확인
       const contentType = response.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
         const jsonResponse = await response.json();
-        console.log('[useAuth] API 응답 데이터:', jsonResponse);
 
         if (jsonResponse.success && jsonResponse.data) {
           // 사용자 데이터 안전하게 추출
@@ -79,22 +69,18 @@ function useAuth() {
             userData.email = 'temp@example.com';
           }
 
-          console.log('[useAuth] 사용자 정보 설정:', userData.email);
           setUser(userData);
           setIsAuthenticated(true);
 
           // 현재 로그인 페이지에 있다면 홈으로 리디렉션
           if (window.location.pathname === '/login') {
-            console.log('[useAuth] 로그인 페이지에서 홈으로 리디렉션');
             window.location.replace('/');
           }
         } else {
-          console.log('[useAuth] 인증 실패');
           setUser(null);
           setIsAuthenticated(false);
         }
       } else {
-        console.log('[useAuth] 응답이 JSON이 아님');
         setUser(null);
         setIsAuthenticated(false);
       }
@@ -109,22 +95,12 @@ function useAuth() {
 
   // 초기 마운트 시 인증 상태 확인
   useEffect(() => {
-    console.log('[useAuth] 초기 마운트, 인증 상태 확인');
-
-    // 쿠키 확인
-    const hasCookie = document.cookie.includes('sessionUser=');
-    console.log(
-      '[useAuth] 초기 마운트 쿠키 확인:',
-      hasCookie ? '있음' : '없음'
-    );
-
     checkAuth();
 
-    // 주기적으로 인증 상태 확인 (선택 사항)
+    // 주기적으로 인증 상태 확인 (5분마다로 변경)
     const interval = setInterval(() => {
-      console.log('[useAuth] 주기적 인증 상태 확인');
       checkAuth();
-    }, 30000); // 30초마다 확인
+    }, 300000); // 5분마다 확인 (30초에서 5분으로 변경)
 
     return () => clearInterval(interval);
   }, [checkAuth]);
@@ -160,8 +136,6 @@ function useAuth() {
         const jsonResponse = await response.json();
 
         if (jsonResponse.success && jsonResponse.data) {
-          console.log('로그인 API 응답 성공:', jsonResponse.data);
-
           // 사용자 데이터 확인 및 안전하게 설정
           let userData = null;
 

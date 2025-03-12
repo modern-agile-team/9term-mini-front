@@ -1,3 +1,5 @@
+import { memo } from 'react';
+
 const CommentList = ({
   postId,
   currentUser,
@@ -38,4 +40,5 @@ const CommentList = ({
   );
 };
 
-export default CommentList;
+// React.memo를 사용하여 불필요한 리렌더링 방지
+export default memo(CommentList);

@@ -25,10 +25,7 @@ const Login = () => {
 
   // 사용자가 이미 인증되어 있다면 자동으로 홈으로 리디렉션
   useEffect(() => {
-    console.log('인증 상태 변경:', isAuthenticated);
-
     if (isAuthenticated) {
-      console.log('인증됨, 홈으로 이동합니다.');
       // 강제로 홈으로 이동
       window.location.replace('/');
     }
@@ -40,10 +37,8 @@ const Login = () => {
       try {
         // 쿠키 확인
         const hasCookie = document.cookie.includes('sessionUser=');
-        console.log('쿠키 확인:', hasCookie ? '있음' : '없음');
 
         if (hasCookie || isAuthenticated) {
-          console.log('쿠키 또는 인증 상태 확인됨, 홈으로 이동합니다.');
           window.location.replace('/');
         }
       } catch (error) {
@@ -88,7 +83,6 @@ const Login = () => {
 
       if (success) {
         setIsRedirecting(true);
-        console.log('로그인 성공, 홈으로 이동합니다.');
 
         // 로그인 성공 이벤트 발생
         window.dispatchEvent(new CustomEvent('auth:loginSuccess'));

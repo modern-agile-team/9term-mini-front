@@ -19,13 +19,9 @@ let users = [
 
 // ✅ `document.cookie`에서 사용자 세션 가져오기
 const getSessionUser = () => {
-  console.log('[MSW] 모든 쿠키:', document.cookie);
-
   const cookie = document.cookie
     .split('; ')
     .find(row => row.startsWith('sessionUser='));
-
-  console.log('[MSW] sessionUser 쿠키:', cookie || '없음');
 
   if (!cookie) return null;
 
@@ -48,8 +44,6 @@ const setSessionCookie = userData => {
   // 쿠키 설정 (SameSite=None, Secure 옵션 제거하여 로컬 개발 환경에서 작동하도록)
   const cookieValue = encodeURIComponent(JSON.stringify(userData));
   document.cookie = `sessionUser=${cookieValue}; expires=${expirationDate.toUTCString()}; path=/`;
-
-  console.log('쿠키 설정됨:', document.cookie);
 };
 
 // ✅ 쿠키 삭제 함수
@@ -57,6 +51,14 @@ const clearSessionCookie = () => {
   document.cookie =
     'sessionUser=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
 };
+
+// ✅ 이미지 요청 처리 핸들러 추가
+const imageHandlers = [
+  http.get('https://images.unsplash.com/photo-*', () => {
+    // 이미지 요청을 패스스루하여 실제 이미지를 가져오도록 함
+    return HttpResponse.json({ success: true }, { status: 200 });
+  }),
+];
 
 // ✅ 회원가입
 const registerHandler = http.post('api/register', async ({ request }) => {
@@ -103,7 +105,6 @@ const registerHandler = http.post('api/register', async ({ request }) => {
 const loginHandler = http.post('api/login', async ({ request }) => {
   try {
     const { email, pwd } = await request.json();
-    console.log(`[MSW] 로그인 시도: ${email}`);
 
     if (!email || !pwd) {
       return HttpResponse.json(
@@ -118,7 +119,6 @@ const loginHandler = http.post('api/login', async ({ request }) => {
     const user = users.find(u => u.email === email);
 
     if (!user) {
-      console.log(`[MSW] 로그인 실패: 존재하지 않는 이메일 - ${email}`);
       return HttpResponse.json(
         {
           success: false,
@@ -129,7 +129,6 @@ const loginHandler = http.post('api/login', async ({ request }) => {
     }
 
     if (user.pwd !== pwd) {
-      console.log(`[MSW] 로그인 실패: 비밀번호 불일치 - ${email}`);
       return HttpResponse.json(
         {
           success: false,
@@ -148,8 +147,6 @@ const loginHandler = http.post('api/login', async ({ request }) => {
 
     // 쿠키에 사용자 정보 저장
     setSessionCookie(userData);
-
-    console.log(`[MSW] 로그인 성공: ${email}`);
 
     return HttpResponse.json({
       success: true,
@@ -170,20 +167,14 @@ const getMeHandler = http.get('api/users/me', async () => {
   try {
     // 쿠키에서 세션 정보 가져오기
     const sessionUser = getSessionUser();
-    console.log(
-      '[MSW] /api/users/me 호출됨, 세션 사용자:',
-      sessionUser ? '있음' : '없음'
-    );
 
     if (!sessionUser) {
-      console.log('[MSW] 인증되지 않은 사용자');
       return HttpResponse.json(
         { success: false, message: '인증되지 않은 사용자입니다.' },
         { status: 401 }
       );
     }
 
-    console.log('[MSW] 인증된 사용자:', sessionUser.email);
     return HttpResponse.json({
       success: true,
       message: '사용자 정보 조회 성공',
@@ -381,13 +372,32 @@ const getUserProfileHandler = http.get(
   }
 );
 
+// 인증 관련 핸들러
 export const authHandlers = [
+  // ✅ 이미지 핸들러 추가
+  ...imageHandlers,
+
+  // ✅ 회원가입
   registerHandler,
+
+  // ✅ 로그인
   loginHandler,
+
+  // ✅ 현재 로그인한 사용자 정보
   getMeHandler,
+
+  // ✅ 로그아웃
   logoutHandler,
+
+  // ✅ 프로필 이미지 수정
   profileHandler,
+
+  // ✅ 프로필 이미지 삭제
   profileDeleteHandler,
+
+  // ✅ 사용자 인증 확인
   checkAuthHandler,
+
+  // ✅ 특정 사용자의 프로필 정보 조회
   getUserProfileHandler,
 ];

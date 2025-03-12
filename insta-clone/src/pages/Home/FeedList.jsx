@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import FeedCard from '@/pages/Home/FeedCard';
 
 const FeedList = ({ posts = [], observerRef, hasMore = true }) => {
@@ -48,4 +48,5 @@ const FeedList = ({ posts = [], observerRef, hasMore = true }) => {
   );
 };
 
-export default FeedList;
+// React.memo를 사용하여 불필요한 리렌더링 방지
+export default memo(FeedList);
