@@ -1,7 +1,7 @@
 import ky from 'ky';
 
 const apiClient = ky.create({
-  prefixUrl: 'https://api.modonggu.site/', // 기본 URL 접두사는 비워둠 (Vite 프록시가 처리)
+  prefixUrl: '', // 비워두고 상대 경로를 사용하도록 수정 (Vite 프록시가 처리)
   headers: {
     'Content-Type': 'application/json',
   },

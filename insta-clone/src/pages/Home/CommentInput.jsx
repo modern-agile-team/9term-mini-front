@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, memo } from 'react';
 import useComments from '@/hooks/useComments'; // useComments 훅 사용
 
 const CommentInput = ({ postId, onCommentAdded }) => {
@@ -15,11 +15,10 @@ const CommentInput = ({ postId, onCommentAdded }) => {
     await addComment(newComment);
     setNewComment('');
 
-    // 댓글 추가 후 콜백 함수 호출 (약간의 지연 추가)
+    // 댓글 추가 후 콜백 함수 호출 (필요한 경우에만)
     if (onCommentAdded && typeof onCommentAdded === 'function') {
-      setTimeout(() => {
-        onCommentAdded();
-      }, 300);
+      // 콜백 함수 호출 (지연 시간 제거)
+      onCommentAdded();
     }
 
     setTimeout(() => {
@@ -54,4 +53,5 @@ const CommentInput = ({ postId, onCommentAdded }) => {
   );
 };
 
-export default CommentInput;
+// React.memo를 사용하여 불필요한 리렌더링 방지
+export default memo(CommentInput);

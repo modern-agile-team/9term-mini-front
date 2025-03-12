@@ -19,13 +19,9 @@ let users = [
 
 // ✅ `document.cookie`에서 사용자 세션 가져오기
 const getSessionUser = () => {
-  console.log('[MSW] 모든 쿠키:', document.cookie);
-
   const cookie = document.cookie
     .split('; ')
     .find(row => row.startsWith('sessionUser='));
-
-  console.log('[MSW] sessionUser 쿠키:', cookie || '없음');
 
   if (!cookie) return null;
 
@@ -48,8 +44,6 @@ const setSessionCookie = userData => {
   // 쿠키 설정 (SameSite=None, Secure 옵션 제거하여 로컬 개발 환경에서 작동하도록)
   const cookieValue = encodeURIComponent(JSON.stringify(userData));
   document.cookie = `sessionUser=${cookieValue}; expires=${expirationDate.toUTCString()}; path=/`;
-
-  console.log('쿠키 설정됨:', document.cookie);
 };
 
 // ✅ 쿠키 삭제 함수
@@ -57,6 +51,23 @@ const clearSessionCookie = () => {
   document.cookie =
     'sessionUser=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
 };
+
+// ✅ 이미지 요청 처리 핸들러 추가
+export const imageHandlers = [
+  // 이 핸들러를 제거하거나 주석 처리해도 이미지가 정상적으로 표시되는 경우가 있습니다.
+  // 이는 다음과 같은 이유 때문일 수 있습니다:
+  // 1. 브라우저 캐시: 이전에 로드된 이미지가 브라우저 캐시에 저장되어 있을 수 있음
+  // 2. MSW 설정: MSW가 특정 도메인의 요청을 자동으로 패스스루하도록 설정되어 있을 수 있음
+  // 3. 네트워크 설정: 개발 환경의 네트워크 설정이 특정 요청을 우회하도록 구성되어 있을 수 있음
+  // 이미지 요청 핸들러 주석 처리 - 이 상태에서 이미지가 정상적으로 표시됨
+  /*
+  http.get('https://images.unsplash.com/photo-*', ({ request }) => {
+    // 실제 이미지 URL로 패스스루 - MSW가 이 요청을 가로채지 않고 실제 Unsplash 서버로 전달
+    // 이렇게 하면 Unsplash의 실제 이미지를 가져올 수 있음
+    return HttpResponse.passthrough();
+  }),
+  */
+];
 
 // ✅ 회원가입
 const registerHandler = http.post('api/register', async ({ request }) => {
@@ -103,7 +114,6 @@ const registerHandler = http.post('api/register', async ({ request }) => {
 const loginHandler = http.post('api/login', async ({ request }) => {
   try {
     const { email, pwd } = await request.json();
-    console.log(`[MSW] 로그인 시도: ${email}`);
 
     if (!email || !pwd) {
       return HttpResponse.json(
@@ -118,7 +128,6 @@ const loginHandler = http.post('api/login', async ({ request }) => {
     const user = users.find(u => u.email === email);
 
     if (!user) {
-      console.log(`[MSW] 로그인 실패: 존재하지 않는 이메일 - ${email}`);
       return HttpResponse.json(
         {
           success: false,
@@ -129,7 +138,6 @@ const loginHandler = http.post('api/login', async ({ request }) => {
     }
 
     if (user.pwd !== pwd) {
-      console.log(`[MSW] 로그인 실패: 비밀번호 불일치 - ${email}`);
       return HttpResponse.json(
         {
           success: false,
@@ -148,8 +156,6 @@ const loginHandler = http.post('api/login', async ({ request }) => {
 
     // 쿠키에 사용자 정보 저장
     setSessionCookie(userData);
-
-    console.log(`[MSW] 로그인 성공: ${email}`);
 
     return HttpResponse.json({
       success: true,
@@ -170,20 +176,14 @@ const getMeHandler = http.get('api/users/me', async () => {
   try {
     // 쿠키에서 세션 정보 가져오기
     const sessionUser = getSessionUser();
-    console.log(
-      '[MSW] /api/users/me 호출됨, 세션 사용자:',
-      sessionUser ? '있음' : '없음'
-    );
 
     if (!sessionUser) {
-      console.log('[MSW] 인증되지 않은 사용자');
       return HttpResponse.json(
         { success: false, message: '인증되지 않은 사용자입니다.' },
         { status: 401 }
       );
     }
 
-    console.log('[MSW] 인증된 사용자:', sessionUser.email);
     return HttpResponse.json({
       success: true,
       message: '사용자 정보 조회 성공',
@@ -381,13 +381,32 @@ const getUserProfileHandler = http.get(
   }
 );
 
+// ✅ 모든 인증 관련 핸들러 내보내기
 export const authHandlers = [
+  // 이미지 핸들러는 주석 처리되어 있으므로 제거
+  // ...imageHandlers,
+
+  // ✅ 회원가입
   registerHandler,
+
+  // ✅ 로그인
   loginHandler,
+
+  // ✅ 현재 로그인한 사용자 정보
   getMeHandler,
+
+  // ✅ 로그아웃
   logoutHandler,
+
+  // ✅ 프로필 이미지 수정
   profileHandler,
+
+  // ✅ 프로필 이미지 삭제
   profileDeleteHandler,
+
+  // ✅ 사용자 인증 확인
   checkAuthHandler,
+
+  // ✅ 특정 사용자의 프로필 정보 조회
   getUserProfileHandler,
 ];

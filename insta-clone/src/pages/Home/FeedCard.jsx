@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo, useCallback } from 'react';
 import CommentInput from '@/pages/Home/CommentInput';
 import CommentList from '@/pages/Home/CommentList';
 import useAuth from '@/hooks/useAuth';
@@ -8,6 +8,9 @@ import apiClient from '@/services/apiClient';
 import CreatePostModal from '@/pages/Posts/CreatePostModal';
 import useProfileStore from '@/store/useProfileStore';
 import usePostStore from '@/store/usePostStore';
+
+// ✅ 프로필 이미지 캐시를 위한 객체 (컴포넌트 외부에 선언)
+const profileImageCache = {};
 
 const FeedCard = ({
   postId,
@@ -42,20 +45,27 @@ const FeedCard = ({
 
   const [isEditMode, setIsEditMode] = useState(false);
 
-  // ✅ 댓글 표시 상태가 변경될 때 댓글 목록 다시 불러오기
+  // ✅ 댓글 표시 상태가 변경될 때만 댓글 목록 불러오기 (최적화)
   useEffect(() => {
-    if (showComments) {
+    if (showComments && commentList.length === 0) {
       fetchComments();
     }
   }, [showComments]);
 
-  // ✅ 작성자의 프로필 이미지 가져오기
+  // ✅ 작성자의 프로필 이미지 가져오기 (캐시 활용)
   useEffect(() => {
     const fetchAuthorProfile = async () => {
       try {
+        // 캐시에 이미 있는 경우 재사용
+        if (profileImageCache[author]) {
+          setAuthorProfileImg(profileImageCache[author]);
+          return;
+        }
+
         // 현재 로그인한 사용자가 작성자인 경우
         if (user && user.email === author) {
           setAuthorProfileImg(user.profileImg);
+          profileImageCache[author] = user.profileImg;
           return;
         }
 
@@ -71,6 +81,8 @@ const FeedCard = ({
 
           if (jsonResponse.success && jsonResponse.data) {
             setAuthorProfileImg(jsonResponse.data.profileImg);
+            // 캐시에 저장
+            profileImageCache[author] = jsonResponse.data.profileImg;
           }
         }
       } catch (error) {
@@ -87,6 +99,8 @@ const FeedCard = ({
       // 현재 로그인한 사용자가 작성자인 경우에만 프로필 이미지 업데이트
       if (user && user.email === author) {
         setAuthorProfileImg(event.detail.profileImg);
+        // 캐시 업데이트
+        profileImageCache[author] = event.detail.profileImg;
       }
     };
 
@@ -212,7 +226,7 @@ const FeedCard = ({
                 onDeleteComment={deleteComment}
               />
             )}
-            <CommentInput postId={postId} onCommentAdded={fetchComments} />
+            <CommentInput postId={postId} />
           </>
         )}
       </div>
@@ -252,4 +266,5 @@ const FeedCard = ({
   );
 };
 
-export default FeedCard;
+// ✅ React.memo를 사용하여 불필요한 리렌더링 방지
+export default memo(FeedCard);
