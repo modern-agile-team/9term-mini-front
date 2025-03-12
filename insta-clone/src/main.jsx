@@ -3,7 +3,7 @@ import './index.css';
 import App from './App.jsx';
 
 // MSW 사용 여부를 환경 변수로 제어
-const USE_MSW = false; // false로 설정하여 MSW 비활성화
+const USE_MSW = true; // true로 설정하여 MSW 활성화
 
 // 📌 개발 환경에서만 MSW 실행 (USE_MSW가 true일 때만)
 if (process.env.NODE_ENV === 'development' && USE_MSW) {
