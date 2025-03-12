@@ -18,67 +18,61 @@ function useAuth() {
         throwHttpErrors: false,
       });
 
-      // 응답이 JSON인지 확인
-      const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
-        const jsonResponse = await response.json();
+      // JSON 응답 바로 처리
+      const jsonResponse = await response.json();
 
-        if (jsonResponse.success && jsonResponse.data) {
-          // 사용자 데이터 안전하게 추출
-          let userData = null;
+      if (jsonResponse.success && jsonResponse.data) {
+        // 사용자 데이터 안전하게 추출
+        let userData = null;
 
-          // 데이터 구조 확인 및 안전하게 추출
-          if (typeof jsonResponse.data === 'object') {
-            if (jsonResponse.data.user) {
-              userData = jsonResponse.data.user;
-            } else if (
-              Array.isArray(jsonResponse.data) &&
-              jsonResponse.data.length > 0
-            ) {
-              userData = jsonResponse.data[0];
-            } else {
-              userData = jsonResponse.data;
-            }
+        // 데이터 구조 확인 및 안전하게 추출
+        if (typeof jsonResponse.data === 'object') {
+          if (jsonResponse.data.user) {
+            userData = jsonResponse.data.user;
+          } else if (
+            Array.isArray(jsonResponse.data) &&
+            jsonResponse.data.length > 0
+          ) {
+            userData = jsonResponse.data[0];
           } else {
-            console.error(
-              '[useAuth] 예상치 못한 데이터 형식:',
-              jsonResponse.data
-            );
-            setUser(null);
-            setIsAuthenticated(false);
-            isCheckingRef.current = false;
-            return;
-          }
-
-          // 사용자 데이터가 유효한지 확인
-          if (!userData) {
-            console.error(
-              '[useAuth] 사용자 데이터가 없습니다:',
-              jsonResponse.data
-            );
-            setUser(null);
-            setIsAuthenticated(false);
-            isCheckingRef.current = false;
-            return;
-          }
-
-          // 필수 필드 확인
-          if (!userData.email) {
-            console.error('[useAuth] 사용자 이메일이 없습니다:', userData);
-            // 이메일이 없어도 계속 진행 (임시 이메일 할당)
-            userData.email = 'temp@example.com';
-          }
-
-          setUser(userData);
-          setIsAuthenticated(true);
-
-          // 현재 로그인 페이지에 있다면 홈으로 리디렉션
-          if (window.location.pathname === '/login') {
-            window.location.replace('/');
+            userData = jsonResponse.data;
           }
         } else {
+          console.error(
+            '[useAuth] 예상치 못한 데이터 형식:',
+            jsonResponse.data
+          );
           setUser(null);
           setIsAuthenticated(false);
+          isCheckingRef.current = false;
+          return;
+        }
+
+        // 사용자 데이터가 유효한지 확인
+        if (!userData) {
+          console.error(
+            '[useAuth] 사용자 데이터가 없습니다:',
+            jsonResponse.data
+          );
+          setUser(null);
+          setIsAuthenticated(false);
+          isCheckingRef.current = false;
+          return;
+        }
+
+        // 필수 필드 확인
+        if (!userData.email) {
+          console.error('[useAuth] 사용자 이메일이 없습니다:', userData);
+          // 이메일이 없어도 계속 진행 (임시 이메일 할당)
+          userData.email = 'temp@example.com';
+        }
+
+        setUser(userData);
+        setIsAuthenticated(true);
+
+        // 현재 로그인 페이지에 있다면 홈으로 리디렉션
+        if (window.location.pathname === '/login') {
+          window.location.replace('/');
         }
       } else {
         setUser(null);
@@ -123,66 +117,61 @@ function useAuth() {
         throwHttpErrors: false,
       });
 
-      // 응답이 JSON인지 확인
-      const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
-        const jsonResponse = await response.json();
+      // JSON 응답 바로 처리
+      const jsonResponse = await response.json();
 
-        if (jsonResponse.success && jsonResponse.data) {
-          // 사용자 데이터 확인 및 안전하게 설정
-          let userData = null;
+      if (jsonResponse.success && jsonResponse.data) {
+        // 사용자 데이터 확인 및 안전하게 설정
+        let userData = null;
 
-          // 데이터 구조 확인 및 안전하게 추출
-          if (typeof jsonResponse.data === 'object') {
-            if (jsonResponse.data.user) {
-              userData = jsonResponse.data.user;
-            } else {
-              userData = jsonResponse.data;
-            }
+        // 데이터 구조 확인 및 안전하게 추출
+        if (typeof jsonResponse.data === 'object') {
+          if (jsonResponse.data.user) {
+            userData = jsonResponse.data.user;
           } else {
-            console.error('예상치 못한 데이터 형식:', jsonResponse.data);
-            throw new Error('서버 응답 형식 오류');
+            userData = jsonResponse.data;
           }
-
-          // 사용자 데이터가 유효한지 확인
-          if (!userData) {
-            console.error('사용자 데이터가 없습니다:', jsonResponse.data);
-            throw new Error('유효하지 않은 사용자 데이터');
-          }
-
-          // 필수 필드 확인
-          if (!userData.email) {
-            console.error('사용자 이메일이 없습니다:', userData);
-            // 이메일이 없어도 계속 진행 (임시 이메일 할당)
-            userData.email = 'temp@example.com';
-          }
-
-          // 사용자 상태 즉시 업데이트
-          setUser(userData);
-          setIsAuthenticated(true);
-
-          // 로그인 성공 후 사용자 정보 가져오기
-          await checkAuth();
-
-          // 로그인 이벤트 발생
-          window.dispatchEvent(
-            new CustomEvent('auth:login', {
-              detail: { user: userData },
-            })
-          );
-
-          // 현재 로그인 페이지에 있다면 홈으로 리디렉션
-          if (window.location.pathname === '/login') {
-            window.location.replace('/');
-          }
-
-          return true;
         } else {
-          const errorMessage = jsonResponse.message || '로그인 실패';
-          throw new Error(errorMessage);
+          console.error('예상치 못한 데이터 형식:', jsonResponse.data);
+          throw new Error('서버 응답 형식 오류');
         }
+
+        // 사용자 데이터가 유효한지 확인
+        if (!userData) {
+          console.error('사용자 데이터가 없습니다:', jsonResponse.data);
+          throw new Error('유효하지 않은 사용자 데이터');
+        }
+
+        // 필수 필드 확인
+        if (!userData.email) {
+          console.error('사용자 이메일이 없습니다:', userData);
+          // 이메일이 없어도 계속 진행 (임시 이메일 할당)
+          userData.email = 'temp@example.com';
+        }
+
+        // 사용자 상태 즉시 업데이트
+        setUser(userData);
+        setIsAuthenticated(true);
+
+        // 로그인 성공 후 사용자 정보 가져오기
+        await checkAuth();
+
+        // 로그인 이벤트 발생
+        window.dispatchEvent(
+          new CustomEvent('auth:login', {
+            detail: { user: userData },
+          })
+        );
+
+        // 현재 로그인 페이지에 있다면 홈으로 리디렉션
+        if (window.location.pathname === '/login') {
+          window.location.replace('/');
+        }
+
+        return true;
       } else {
-        throw new Error('서버 응답 형식 오류');
+        const errorMessage = jsonResponse.message || '로그인 실패';
+        throw new Error(errorMessage);
       }
     } catch (error) {
       console.error('로그인 오류:', error);
